@@ -87,7 +87,7 @@ table and normally select greedy actions.
 
 1. Call `reset()` and verify that a four-element state is returned.
 2. Apply each legal action and confirm the torque reported in `info`.
-3. Verify that an episode ends when the pendulum leaves the allowed angle.
+3. Verify the swing-up episode logic: leaving the upright region does not end an episode; it ends on the arm-angle limit (unsafe), after 5 s continuously upright (success), or at the maximum duration (timeout).
 4. Test the discretizer on values below, inside, and above the selected ranges.
 5. Set and report random seeds for reproducible comparisons.
 
@@ -113,3 +113,4 @@ Run order (from this folder):
 
 Files: `tabular.py` (discretizer, epsilon-greedy, TD updates), `training.py` (episode/train/evaluate), `io_utils.py`, `tests/`.
 `furuta_env.py` was modified from the supplied starter (swing-up episode logic; see the report).
+Reward: per-step `(1 + cos(theta_wrapped)) / 2 - 0.001 * torque^2` (non-negative living reward, 0 at the bottom, 1 upright) and -10 on unsafe termination. The earlier `cos(theta)` reward was negative near the bottom, which made crashing into the arm limit cheaper than surviving.

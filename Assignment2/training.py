@@ -36,30 +36,58 @@ def run_episode(
 
 
 def evaluate(env, disc, Q, seed):
-    """Greedy rollout with frozen Q (eps = 0, ties -> lowest index, no updates)."""
+    """Greedy rollout with frozen Q (eps = 0, no updates).
+
+    Ties are broken deterministically (argmax -> lowest index), unlike training,
+    which breaks ties uniformly at random.  In an all-zero (never updated) row
+    this always picks action 0; ``unvisited_steps`` counts those steps.
+    """
     state, _ = env.reset(seed=seed)
     trace = [wrap_to_pi(state[2])]
-    steps, outcome = 0, None
+    phi = [float(state[0])]
+    actions, unvisited, steps, outcome = [], 0, 0, None
     while True:
-        a = int(np.argmax(Q[disc.index(state)]))
+        row = Q[disc.index(state)]
+        unvisited += int(not row.any())
+        a = int(np.argmax(row))
         state, _, terminated, truncated, info = env.step(a)
         steps += 1
+        actions.append(a)
+        phi.append(float(state[0]))
         trace.append(info["theta_wrapped"])
         if terminated or truncated:
             outcome = info["outcome"]
             break
-    return {"theta_wrapped": np.array(trace), "outcome": outcome, "steps": steps}
+    return {"theta_wrapped": np.array(trace), "outcome": outcome, "steps": steps,
+            "actions": np.array(actions, dtype=int), "phi": np.array(phi),
+            "unvisited_steps": unvisited}
+
+
+def swing_peaks(theta_wrapped, min_height=0.1):
+    """Heights of local maxima of the deviation from downward, pi - |theta_wrapped|."""
+    d = np.pi - np.abs(np.asarray(theta_wrapped, dtype=float))
+    i = np.arange(1, len(d) - 1)
+    k = i[(d[i] > d[i - 1]) & (d[i] >= d[i + 1]) & (d[i] >= min_height)]
+    return d[k]
 
 
 def classify_evaluation(theta_wrapped, outcome, near_downward_rad=0.5):
-    """Name what the greedy policy did (thresholds: 20 deg upright, 0.5 rad from downward)."""
+    """Name what the greedy policy did (thresholds: 20 deg upright, 0.5 rad from downward).
+
+    "growing_swing" needs >= 2 swing peaks, each larger than the last, with the
+    largest at least ``near_downward_rad``.  An unsafe end without that is
+    "arm_limit_runoff" (any pendulum deflection was a side effect of the arm).
+    """
     if outcome == "success":
         return "completed_5s_balance"
     th = np.abs(np.asarray(theta_wrapped, dtype=float))
     if th.min() <= np.deg2rad(20.0):
         return "reached_upright_region"
-    if (np.pi - th).max() >= near_downward_rad:
+    peaks = swing_peaks(theta_wrapped)
+    if len(peaks) >= 2 and np.all(np.diff(peaks) > 0) and peaks.max() >= near_downward_rad:
         return "growing_swing"
+    if outcome == "unsafe":
+        return "arm_limit_runoff"
     return "near_downward"
 
 

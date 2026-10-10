@@ -21,7 +21,7 @@ input is the motor torque \(\tau_\phi\); the pendulum joint is unactuated.
 | Forward-Euler integration | Fourth-order Runge--Kutta integration |
 | Noise inserted while evaluating dynamics | Optional process noise added after integration |
 | State stored as columns of one matrix | State returned at every interaction step |
-| No episode definition | Angle limits and maximum duration define an episode |
+| No episode definition | Arm-angle limit (unsafe), 5 s continuously upright (success) and maximum duration (timeout) define an episode |
 
 The nonlinear acceleration equations are otherwise a direct translation of
 the supplied function `furuta_pend_sim` with the unactuated torque fixed to

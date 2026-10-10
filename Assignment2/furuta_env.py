@@ -17,7 +17,12 @@ values.
 HW2 modification: the supplied starter was a balancing task (upright start,
 termination at 20 degrees).  It was edited so that leaving the upright region
 does NOT terminate an episode, success means holding |wrapToPi(theta)| <= 20
-degrees for five seconds, and ``info["outcome"]`` reports how an episode ended.
+degrees for five seconds, and ``info["outcome"]``
+reports how an episode ended.  The per-step reward is
+(1 + cos(theta_wrapped)) / 2 (0 at the bottom, 1 upright) minus a tiny torque
+penalty, and -10 for an unsafe termination.  The living reward is non-negative
+so ending an episode early is never better than continuing (a negative living
+reward made crashing into the arm limit look attractive).
 """
 
 from __future__ import annotations
@@ -207,7 +212,8 @@ class FurutaEnv:
         else:
             outcome = None
 
-        reward = float(np.cos(theta_wrapped) - 0.001 * torque**2)
+        # Non-negative living reward: terminating is never better than surviving.
+        reward = float(0.5 * (1.0 + np.cos(theta_wrapped)) - 0.001 * torque**2)
         if unsafe:
             reward = -10.0
 

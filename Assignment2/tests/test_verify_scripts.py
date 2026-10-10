@@ -22,6 +22,11 @@ def test_verify_env(tmp_results):
     assert out["outcomes"]["success"]["outcome"] == "success"
     assert out["outcomes"]["unsafe"]["outcome"] == "unsafe"
     assert out["outcomes"]["timeout"]["outcome"] == "timeout"
+    z = out["outcomes"]["zero_torque_downward_full_episode"]
+    assert z["outcome"] == "timeout" and z["steps"] == 2000 and not z["terminated"]
+    c = out["upright_counter_reset"]
+    assert c["upright_steps_before_exit"] == 300 and c["upright_steps_after_exit"] == 0
+    assert c["steps_after_reentry_until_done"] == 500 and c["outcome"] == "success"
     assert json.loads((tmp_results / "verify_env.json").read_text())["dt"] == 0.01
 
 

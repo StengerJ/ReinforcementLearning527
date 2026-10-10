@@ -58,11 +58,41 @@ def test_train_single_episode_does_not_divide_by_zero():
     assert len(res["returns"]) == 1
 
 
+def _swing(amps):
+    """Synthetic theta_wrapped trace whose deviation-from-downward peaks at `amps`."""
+    t = np.linspace(0.0, len(amps) * np.pi, 400 * len(amps))
+    env_ = np.interp(t, np.arange(len(amps)) * np.pi + np.pi / 2, amps)
+    dev = env_ * np.abs(np.sin(t))
+    return np.pi - dev  # theta_wrapped > 0 with |theta| = pi - dev
+
+
 def test_classify_evaluation():
     near = np.full(10, np.pi - 0.1)
     assert classify_evaluation(near, "timeout") == "near_downward"
-    swing = np.array([np.pi, np.pi - 1.0, np.pi])
-    assert classify_evaluation(swing, "timeout") == "growing_swing"
+    assert classify_evaluation(_swing([0.1, 0.1]), "timeout") == "near_downward"
+    grow = _swing([0.3, 0.6, 0.9, 1.2])
+    assert classify_evaluation(grow, "timeout") == "growing_swing"
+    assert classify_evaluation(grow, "unsafe") == "growing_swing"
     upright = np.array([np.pi, 1.0, 0.2])
     assert classify_evaluation(upright, "unsafe") == "reached_upright_region"
     assert classify_evaluation(upright, "success") == "completed_5s_balance"
+
+
+def test_classify_deflection_without_growth_is_not_growing_swing():
+    one_hump = np.pi - np.array([0.0, 0.5, 1.0, 0.5, 0.0])   # one peak only
+    assert classify_evaluation(one_hump, "unsafe") == "arm_limit_runoff"
+    assert classify_evaluation(one_hump, "timeout") == "near_downward"
+    mono = np.pi - np.linspace(0.0, 1.0, 50)                  # monotone drift, no peak
+    assert classify_evaluation(mono, "unsafe") == "arm_limit_runoff"
+    decay = _swing([1.2, 0.9, 0.6, 0.3])                      # shrinking peaks
+    assert classify_evaluation(decay, "unsafe") == "arm_limit_runoff"
+    assert classify_evaluation(decay, "timeout") == "near_downward"
+
+
+def test_evaluate_records_actions_phi_and_unvisited():
+    disc = Discretizer()
+    env = FurutaEnv(max_steps=30, seed=1)
+    ev = evaluate(env, disc, np.zeros((disc.n_states, 3)), seed=5)
+    assert len(ev["actions"]) == ev["steps"] and len(ev["phi"]) == ev["steps"] + 1
+    assert not ev["actions"].any()          # all-zero rows -> lowest index
+    assert ev["unvisited_steps"] == ev["steps"]

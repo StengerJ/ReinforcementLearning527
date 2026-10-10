@@ -31,7 +31,7 @@
       0.0
     ],
     "A_t": 2,
-    "R_t1": -0.9997449856231394,
+    "R_t1": 0.0001273071884303038,
     "S_t1": [
       0.014306160795638869,
       0.1219760580601912,
@@ -62,6 +62,20 @@
       "terminated": false,
       "truncated": true,
       "outcome": "timeout"
+    },
+    "zero_torque_downward_full_episode": {
+      "steps": 2000,
+      "terminated": false,
+      "truncated": true,
+      "outcome": "timeout"
     }
+  },
+  "upright_counter_reset": {
+    "inside_steps_before_exit": 300,
+    "upright_steps_before_exit": 300,
+    "upright_steps_after_exit": 0,
+    "terminated_on_exit": false,
+    "steps_after_reentry_until_done": 500,
+    "outcome": "success"
   }
 }

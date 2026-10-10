@@ -8,7 +8,7 @@ import numpy as np
 from furuta_env import FurutaEnv
 from io_utils import RESULTS_DIR, save_json
 from tabular import Discretizer
-from training import train
+from training import swing_peaks, train
 
 CONFIG = dict(
     kind="qlearning", seeds=[0, 1, 2], n_episodes=2000, max_steps=1000,
@@ -36,7 +36,11 @@ def main():
         for k in arrays:
             if k in res:
                 arrays[k].append(res[k])
-        arrays[f"eval_theta_{seed}"] = res["eval"]["theta_wrapped"]
+        ev = res["eval"]
+        arrays[f"eval_theta_{seed}"] = ev["theta_wrapped"]
+        arrays[f"eval_phi_{seed}"] = ev["phi"]
+        arrays[f"eval_actions_{seed}"] = ev["actions"]
+        acts = ev["actions"]
         th = np.abs(res["eval"]["theta_wrapped"])
         w = cfg["moving_window"]
         seeds_out.append({
@@ -51,6 +55,11 @@ def main():
                 "classification": res["eval_class"],
                 "min_abs_theta_deg": float(np.rad2deg(th.min())),
                 "max_deviation_from_downward_deg": float(np.rad2deg((np.pi - th).max())),
+                "torque_switches": int(np.count_nonzero(np.diff(acts))),
+                "action_counts": {str(a): int(np.sum(acts == a)) for a in range(3)},
+                "final_phi": float(ev["phi"][-1]),
+                "n_swing_peaks": int(len(swing_peaks(ev["theta_wrapped"]))),
+                "unvisited_q_row_steps": int(ev["unvisited_steps"]),
             },
             "runtime_s": runtime,
         })
@@ -60,8 +69,8 @@ def main():
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     np.savez(
         RESULTS_DIR / "experiment.npz",
-        **{k: np.array(v) for k, v in arrays.items() if not k.startswith("eval_theta")},
-        **{k: v for k, v in arrays.items() if k.startswith("eval_theta")},
+        **{k: np.array(v) for k, v in arrays.items() if not k.startswith("eval_")},
+        **{k: v for k, v in arrays.items() if k.startswith("eval_")},
     )
     save_json("experiment", {"config": cfg_out, "seeds": seeds_out})
 
