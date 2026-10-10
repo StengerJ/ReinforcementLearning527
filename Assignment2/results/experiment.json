@@ -1,0 +1,79 @@
+{
+  "config": {
+    "kind": "qlearning",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "n_episodes": 2000,
+    "max_steps": 1000,
+    "alpha": 0.1,
+    "gamma": 0.99,
+    "eps_start": 1.0,
+    "eps_end": 0.05,
+    "q_init": 0.0,
+    "moving_window": 50,
+    "dt": 0.01,
+    "n_states": 2275,
+    "n_actions": 3,
+    "eps_schedule": "linear from eps_start to eps_end over episodes",
+    "max_episode_seconds": 10.0
+  },
+  "seeds": [
+    {
+      "seed": 0,
+      "final_moving_average": -235.79564861715417,
+      "mean_duration_last_window": 259.9,
+      "visited_fraction_final": 0.26095238095238094,
+      "outcome_counts": {
+        "unsafe": 1757,
+        "timeout": 243
+      },
+      "eval": {
+        "outcome": "unsafe",
+        "steps": 138,
+        "classification": "growing_swing",
+        "min_abs_theta_deg": 132.35976852540782,
+        "max_deviation_from_downward_deg": 47.64023147459218
+      },
+      "runtime_s": 131.33049120008945
+    },
+    {
+      "seed": 1,
+      "final_moving_average": -305.54843058940924,
+      "mean_duration_last_window": 391.68,
+      "visited_fraction_final": 0.2490842490842491,
+      "outcome_counts": {
+        "unsafe": 1785,
+        "timeout": 215
+      },
+      "eval": {
+        "outcome": "unsafe",
+        "steps": 157,
+        "classification": "growing_swing",
+        "min_abs_theta_deg": 124.20055603015493,
+        "max_deviation_from_downward_deg": 55.799443969845065
+      },
+      "runtime_s": 110.42007909994572
+    },
+    {
+      "seed": 2,
+      "final_moving_average": -217.8888783625325,
+      "mean_duration_last_window": 244.98,
+      "visited_fraction_final": 0.23457875457875457,
+      "outcome_counts": {
+        "timeout": 207,
+        "unsafe": 1793
+      },
+      "eval": {
+        "outcome": "unsafe",
+        "steps": 241,
+        "classification": "growing_swing",
+        "min_abs_theta_deg": 118.67579602236088,
+        "max_deviation_from_downward_deg": 61.32420397763911
+      },
+      "runtime_s": 119.4441499998793
+    }
+  ]
+}

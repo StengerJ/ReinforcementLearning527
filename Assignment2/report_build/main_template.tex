@@ -1,0 +1,70 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs,graphicx,amsmath,amssymb,xcolor,float}
+\usepackage{pgfplots}\pgfplotsset{compat=1.18}
+\input{tables/numbers}
+\title{COSC 527 Homework 2: Building and Verifying a Tabular RL Agent}
+\author{Joshua Stenger}
+\date{}
+\begin{document}
+\maketitle
+
+\noindent\textbf{Note on supplied code.} The supplied \texttt{furuta\_env.py} was a balancing task (upright start, termination at $20^\circ$). I modified it in place for swing-up: downward start, wrapped $\widetilde\theta$, termination only on the arm limit, a five-second success criterion and an explicit \texttt{outcome} field, and the reward $\cos\widetilde\theta-0.001\tau^2$ ($-10$ on unsafe termination).
+
+\section{Environment and episode logic}
+\texttt{reset()} returned $x=\initstate$ ($[\phi,\dot\phi,\theta,\dot\theta]$): the arm is near zero and at rest, and the pendulum hangs near the downward equilibrium ($\widetilde\theta=\inittheta$\,rad, $|\widetilde\theta|\approx\pi$) at rest.
+\begin{center}\input{tables/actions}\end{center}
+Sampled transition (action 2): $S_t=\transS$, $A_t=\transA$, $R_{t+1}=\transR$, $S_{t+1}=\transSn$.
+
+\textbf{Outcomes} ($dt=\dt$\,s, success needs \successsteps{} consecutive steps in $|\widetilde\theta|\le20^\circ$, time limit \maxsteps{} steps): success: \outsuccess; unsafe (arm $|\phi|>\pi$): \outunsafe; time limit: \outtimeout. Success and unsafe are \emph{terminations}; the time limit is \emph{truncation}.
+
+\textbf{Outside the upright region.} After one step from the start, $\widetilde\theta=\outsidedeg^\circ$ and \texttt{terminated} was false, confirming that leaving $|\widetilde\theta|\le20^\circ$ does not end an episode. Terminating there would end every episode on its first step (it starts at the bottom, $\approx180^\circ$ from upright), so the agent could never experience the swinging needed to reach the upright region.
+
+\section{State discretization}
+\begin{center}\input{tables/bins}\end{center}
+Resulting sizes: $|\mathcal S|=\shape=\nstates$ and $|Q|=|\mathcal S|\,n_a=\nstates\cdot\nactions=\nq$.
+Out-of-range values are mapped by \texttt{numpy.digitize} on the \emph{internal} edges, so the first and last bins are open-ended and any value below/above the range falls in the first/last bin; $\theta$ is wrapped to $[-\pi,\pi]$ before binning, and a value exactly on an edge belongs to the upper bin. Non-finite states raise an error.
+\begin{center}\small\input{tables/disc_tests}\end{center}
+
+\section{Epsilon-greedy verification}
+Implementation: with probability $\epsilon$ sample uniformly from \emph{all} actions (greedy ones included); otherwise choose uniformly among tied greedy actions. For $Q(s^\dagger,\cdot)=[1,2,2]$ the implied probabilities are $\epsilon/3$ for action 0 and $\epsilon/3+(1-\epsilon)/2$ for actions 1 and 2. Seed \epsseed, \epsn{} samples, $Q$ unchanged:
+\begin{center}\input{tables/eps}\end{center}
+At $\epsilon=0$ action 0 is never chosen and the two tied greedy actions split about 50/50, since exploration is off and ties are broken uniformly.
+
+\section{SARSA and Q-learning update audit}
+\begin{center}\small\input{tables/audit}\end{center}
+Both targets use the same stored transition. $Y^{\text{SARSA}}=R_{t+1}+\gamma Q(S_{t+1},A_{t+1})$ and $Y^{Q}=R_{t+1}+\gamma\max_a Q(S_{t+1},a)$; the program output matched the hand calculation (asserted in \texttt{audit\_updates.py}). The two targets are equal when the next action $A_{t+1}$ is a greedy action in $S_{t+1}$ (for example the greedy policy or $\epsilon=0$) and differ when exploration picks a non-greedy $A_{t+1}$. For the terminal transition the continuation value is zero, so $Y=R_{t+1}$ whatever values are stored for $S_{t+1}$ (two very different next-state rows give identical results).
+
+\section{Preliminary learning experiment}
+Q-learning; seeds \expseeds; \nepisodes{} episodes; $\alpha=\cfgalpha$, $\gamma=\cfggamma$; $\epsilon$ decays linearly from \epsstart{} to \epsend{}; $Q\equiv0$ initially; maximum episode duration \maxepsec\,s. Moving average window \mawindow. Evaluation: frozen $Q$, $\epsilon=0$, no updates, one greedy episode per seed.
+\begin{center}\small\input{tables/experiment}\end{center}
+\begin{figure}[H]\centering
+\begin{minipage}{.48\linewidth}\input{tables/fig_returns}\end{minipage}\hfill
+\begin{minipage}{.48\linewidth}\input{tables/fig_durations}\end{minipage}\\[1ex]
+\begin{minipage}{.48\linewidth}\input{tables/fig_visited}\end{minipage}\hfill
+\begin{minipage}{.48\linewidth}\input{tables/fig_eval}\end{minipage}
+\caption{Return, duration (moving averages, every 10th episode), visited fraction of state-action entries, and the greedy-evaluation $\widetilde\theta$ trace (green band: upright region).}
+\end{figure}
+\textbf{What the greedy policies did.} In all three evaluation episodes (frozen $Q$, $\epsilon=0$, no updates) the policy produced a \emph{growing swing} but did not come near the upright region. The pendulum was pushed away from the bottom by $48^\circ$, $56^\circ$ and $61^\circ$ (seeds 0, 1, 2; ``max dev.\ from down'' in the table), and its closest approach to upright was $|\widetilde\theta|=132^\circ$, $124^\circ$ and $119^\circ$. None reached the $\pm20^\circ$ region and none completed the five-second balancing objective. Every evaluation episode ended \texttt{unsafe} after 138, 157 and 241 steps (1.4--2.4\,s) because the arm angle left $[-\pi,\pi]$, so the swing was cut off while it was still growing. Training shows the same pattern: 5335 of the 6000 training episodes (88.9\%) ended unsafe, 665 hit the time limit and none succeeded, so the final 50-episode mean duration was only 245--392 steps against the 1000-step cap.
+
+\section{Diagnostic reflection}
+\begin{center}\small\input{tables/visits}\end{center}
+\textbf{(a) What most limits learning.} I think episode duration, through premature termination, limits learning most, rather than the update rule (which Section 4 verifies) or the bin layout. In 88.9\% of training episodes the arm ran past $\pm\pi$, so the last-50-episode mean duration was 245--392 steps of a possible 1000 (about 2.5--3.9\,s of 10\,s). With such short episodes the agent has little time to try the back-and-forth torque pattern that swing-up needs, and only 23.5--26.1\% of the 6825 state-action entries were ever tried. The $-10$ unsafe penalty is also large next to the per-step reward (about $-1$ near the bottom), so the agent is mostly being told to avoid the arm limit, not to approach upright. With one experiment I cannot cleanly separate exploration from the reward, and I did not test that.
+
+\textbf{(b) A rarely visited region.} The $\widetilde\theta$ bins covering $|\widetilde\theta|<75^\circ$ received about 0.0\% of all visits, and the bins from $75^\circ$ to $105^\circ$ received about 0.4--0.5\% each, so the success bin around upright was essentially never entered (under 0.05\% of visits). The two outermost $\widetilde\theta$ bins held about 39\% each, because the start state sits at $|\widetilde\theta|\approx\pi$ and the wrap at $\pm\pi$ splits the downward equilibrium into two table rows. For the project I would change the $\widetilde\theta$ discretization, not by refining the unvisited near-upright bins (the agent does not get there yet), but by removing the seam at the start state, for example by binning $(\cos\theta,\sin\theta)$ or the angle measured from downward, so that downward is one state. I would also give $\dot\phi$ finer bins near zero, since 83\% of visits fall in its single center bin.
+
+\textbf{(c) A test that a return plot would hide.} \texttt{test\_truncation\_still\_bootstraps} (in \texttt{tests/test\_training.py}) sets every $Q$ value to 5 and checks the exact updated entry after a one-step episode that ends by time limit. If truncation were wrongly treated as terminal, the update would use $R$ instead of $R+\gamma\cdot 5$, which changes $Q$ but would barely change a noisy return curve. The terminal case in \texttt{audit\_updates.py} (two very different next-state rows give the same result) and the discretizer wrap test ($\theta=\pi+0.01$ and $\theta=-\pi+0.01$ give the same index) catch the same kind of silent error.
+
+\appendix
+\section{Generative-AI use}
+I used Claude Code (Claude Sonnet 5.5) for this assignment.
+
+\textbf{Prompts.} I asked it to implement the requested items from \texttt{HW2\_Tabular\_RL\_Checkpoint.pdf} in the Assignment 2 folder. In follow-up answers I told it to edit \texttt{furuta\_env.py} in place, to write the report in LaTeX for Overleaf, to put everything (tables, numbers and plots) into a single \texttt{.tex} file, and to write the evaluation paragraph, the reflection in Section 6 and this appendix itself.
+
+\textbf{How the responses influenced my work.} The tool proposed the design (swing-up changes to the environment, the bin layout, the $\epsilon$-greedy tie rule, the update audit and the experiment settings), wrote the code, tests, scripts, tables and plots, ran the experiment, and drafted the text of this report, including Sections 1--6. I reviewed the plan and approved it before implementation. I used the output of the test suite (50 tests passing) and the saved results in \texttt{results/} to check its claims.
+
+\textbf{Suggestions verified, corrected or rejected.} (1) The tool noticed that the supplied environment did not match the PDF (upright start, termination at $20^\circ$, no success flag, unwrapped $\theta$); I chose to modify it in place. (2) It first described the new reward as being ``0 at the bottom''; this was wrong, since $\cos\pi=-1$, and it was corrected. (3) A generated LaTeX macro named \texttt{\string\alpha} would have clashed with a built-in command and was renamed. (4) Its first report layout split the tables and figures into separate files; I rejected that and required a single self-contained file.
+
+\textbf{Parts with tool assistance.} All source files, tests, figures and tables, and the written text. The numerical update audit (Section 4) and the empirical $\epsilon$-greedy frequencies (Section 3) are generated by the submitted code, and every number in the report comes from files in \texttt{results/}. I remain responsible for understanding and explaining every part of the submission.
+
+\end{document}

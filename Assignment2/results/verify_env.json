@@ -1,0 +1,67 @@
+{
+  "initial_state": [
+    0.013696168732145436,
+    0.0,
+    3.11857132496618,
+    0.0
+  ],
+  "initial_theta_wrapped": 3.11857132496618,
+  "dt": 0.01,
+  "max_steps": 2000,
+  "success_steps": 500,
+  "actions": [
+    {
+      "index": 0,
+      "torque": -0.02
+    },
+    {
+      "index": 1,
+      "torque": 0.0
+    },
+    {
+      "index": 2,
+      "torque": 0.02
+    }
+  ],
+  "transition": {
+    "S_t": [
+      0.013696168732145436,
+      0.0,
+      3.11857132496618,
+      0.0
+    ],
+    "A_t": 2,
+    "R_t1": -0.9997449856231394,
+    "S_t1": [
+      0.014306160795638869,
+      0.1219760580601912,
+      3.1189906514505186,
+      0.08383080790431872
+    ]
+  },
+  "outside_upright": {
+    "theta_wrapped_deg": 178.7050006688739,
+    "terminated": false,
+    "truncated": false
+  },
+  "outcomes": {
+    "success": {
+      "steps": 500,
+      "terminated": true,
+      "truncated": false,
+      "outcome": "success"
+    },
+    "unsafe": {
+      "steps": 1,
+      "terminated": true,
+      "truncated": false,
+      "outcome": "unsafe"
+    },
+    "timeout": {
+      "steps": 50,
+      "terminated": false,
+      "truncated": true,
+      "outcome": "timeout"
+    }
+  }
+}
