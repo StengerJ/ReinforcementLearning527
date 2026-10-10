@@ -104,6 +104,11 @@ def add_figures(cfg):
         tmax = max(tmax, t[-1])
         ev.append((f"seed {seed}", t, th))
     write("fig_eval", pgf_figure("time [s]", r"$\widetilde{\theta}$ [deg]", ev, band=(0, f"{tmax:g}")))
+    evp = []
+    for seed in seeds:
+        ph = data[f"eval_phi_{seed}"]
+        evp.append((f"seed {seed}", np.arange(len(ph)) * dt, ph))
+    write("fig_evalphi", pgf_figure("time [s]", r"arm angle $\phi$ [rad]", evp))
 
 
 def main():
@@ -129,6 +134,14 @@ def main():
         "epsend": cfg["eps_end"], "mawindow": cfg["moving_window"],
         "expseeds": ", ".join(map(str, cfg["seeds"])),
     }
+    rc, zt = env["upright_counter_reset"], env["outcomes"]["zero_torque_downward_full_episode"]
+    nums.update({
+        "ctrBefore": rc["upright_steps_before_exit"], "ctrAfter": rc["upright_steps_after_exit"],
+        "ctrTermExit": str(rc["terminated_on_exit"]).lower(),
+        "ctrReentry": rc["steps_after_reentry_until_done"], "ctrOutcome": rc["outcome"],
+        "zeroSteps": zt["steps"], "zeroTerm": str(zt["terminated"]).lower(),
+        "zeroTrunc": str(zt["truncated"]).lower(), "zeroOutcome": zt["outcome"],
+    })
     for k in ("success", "unsafe", "timeout"):
         o = env["outcomes"][k]
         nums[f"out{k}"] = f'{o["outcome"]} after {o["steps"]} steps (terminated={o["terminated"]}, truncated={o["truncated"]})'
@@ -161,6 +174,8 @@ def main():
     nt, tm = aud["nonterminal"], aud["terminal"]
     a_rows = [
         row(r"$S_t, A_t$", f'{nt["s_t"]}, {nt["a_t"]}', "", ""),
+        row(r"$S_t$ bins $(\phi,\dot\phi,\widetilde\theta,\dot\theta)$", str(tuple(nt["s_t_tuple"])), "", ""),
+        row(r"$S_{t+1}$ bins", str(tuple(nt["s_t1_tuple"])), "", ""),
         row(r"$R_{t+1}$", num(nt["r_t1"]), "", ""),
         row(r"$S_{t+1}, A_{t+1}$", f'{nt["s_t1"]}, {nt["a_t1"]}', "", ""),
         row(r"$Q_{old}(S_t,A_t)$", num(nt["q_old_sa"]), "", ""),
@@ -171,26 +186,96 @@ def main():
         row(r"$Q_{new}(S_t,A_t)$", "", num(nt["qnew_sarsa"]), num(nt["qnew_q"])),
     ]
     t_rows = [
-        row(r"$R_{t+1}$ (terminal)", num(tm["r_t1"]), "", ""),
+        row(r"$S_t$ index / bins", f'{tm["s_t"]} / {tuple(tm["s_t_tuple"])}', "", ""),
+        row(r"$S_{t+1}$ index / bins", f'{tm["s_t1"]} / {tuple(tm["s_t1_tuple"])}', "", ""),
+        row(r"$A_t$", tm["a_t"], "", ""),
+        row(r"$R_{t+1}$ (unsafe termination)", num(tm["r_t1"]), "", ""),
+        row(r"$Q_{old}(S_t,A_t)$", num(tm["q_old_sa"]), "", ""),
         row(r"$Q(S_{t+1},\cdot)$ variant 1", vec(tm["q_next_variants"][0]), "", ""),
         row(r"$Q(S_{t+1},\cdot)$ variant 2", vec(tm["q_next_variants"][1], 1), "", ""),
         row("", "", "SARSA", "Q-learning"),
         row("Target $Y$ (both variants)", "", num(tm["y_sarsa"]), num(tm["y_q"])),
         row(r"$Q_{new}(S_t,A_t)$", "", num(tm["qnew_sarsa"]), num(tm["qnew_q"])),
     ]
+    assert tm["s_t_and_s_t1_share_q_row"] and tm["s_t"] == tm["s_t1"]
+    assert all(v[tm["a_t"]] == tm["q_old_sa"] for v in tm["q_next_variants"])
+    assert nt["crosses_pi_wrap_seam"]
+    nums2 = {
+        "termS": vec_inline(tm["S_t"], 2), "termSn": vec_inline(tm["S_t1"], 2), "termA": tm["a_t"],
+        "termQsa": num(tm["q_old_sa"], 1), "termR": num(tm["r_t1"], 0),
+        "seamFrom": nt["s_t_tuple"][2], "seamTo": nt["s_t1_tuple"][2],
+        "auditgamma": aud["gamma"], "auditalpha": aud["alpha"],
+    }
+    write("numbers_audit", [f"\\newcommand{{\\{k}}}{{{v}}}" for k, v in nums2.items()])
     write("audit", table("lccc", ["Nonterminal", "", "", ""], a_rows)
           + [r"\medskip"] + table("lccc", ["Terminal", "", "", ""], t_rows))
 
     # experiment
-    e_rows = [
-        row(s["seed"], num(s["final_moving_average"], 2), num(s["mean_duration_last_window"], 0),
-            num(s["visited_fraction_final"], 3), s["eval"]["classification"].replace("_", r"\_"),
-            num(s["eval"]["max_deviation_from_downward_deg"], 1), num(s["eval"]["min_abs_theta_deg"], 1))
-        for s in exp["seeds"]
-    ]
-    write("experiment", table("cccccrr",
-          ["Seed", "Final MA return", "Final MA dur.", "Visited frac.", "Eval. behavior",
-           r"Max dev. from down [$^\circ$]", r"Min $|\widetilde\theta|$ [$^\circ$]"], e_rows))
+    data0 = np.load(RESULTS_DIR / "experiment.npz")
+    seeds = cfg["seeds"]
+    nw = 100
+    first = [float(np.mean(data0["durations"][i][:nw])) for i in range(len(seeds))]
+    last = [float(np.mean(data0["durations"][i][-nw:])) for i in range(len(seeds))]
+    e_rows = []
+    for i, s_ in enumerate(exp["seeds"]):
+        oc = s_["outcome_counts"]
+        e_rows.append(row(s_["seed"], num(s_["final_moving_average"], 2), num(first[i], 0), num(last[i], 0),
+                          num(s_["visited_fraction_final"], 3), f'{100 * oc.get("unsafe", 0) / cfg["n_episodes"]:.1f}'))
+    write("experiment", table("cccccc",
+          ["Seed", "Final MA return", f"Mean dur. first {nw} ep.", f"Mean dur. last {nw} ep.",
+           "Visited frac.", r"Unsafe episodes [\%]"], e_rows))
+    ev_rows = []
+    for s_ in exp["seeds"]:
+        e = s_["eval"]
+        ev_rows.append(row(s_["seed"], e["classification"].replace("_", r"\_"), e["outcome"], e["steps"],
+                           num(e["max_deviation_from_downward_deg"], 1), num(e["min_abs_theta_deg"], 1),
+                           e["torque_switches"], e["n_swing_peaks"], num(e["final_phi"], 2)))
+    write("evaltable", table("ccccrrrrr",
+          ["Seed", "Class", "Outcome", "Steps", r"Max dev. [$^\circ$]", r"Min $|\widetilde\theta|$ [$^\circ$]",
+           "Torque switches", "Swing peaks", r"final $\phi$ [rad]"], ev_rows))
+    sd = exp["seeds"]
+    assert len({x["eval"]["classification"] for x in sd}) == 1
+    assert all(x["eval"]["outcome"] == "timeout" for x in sd)
+
+    def span(vals, nd=0):
+        lo, hi = min(vals), max(vals)
+        return f"{lo:.{nd}f}" if f"{lo:.{nd}f}" == f"{hi:.{nd}f}" else f"{lo:.{nd}f}--{hi:.{nd}f}"
+    n_ep = cfg["n_episodes"]
+    unsafe = sum(x["outcome_counts"].get("unsafe", 0) for x in sd)
+    timeout = sum(x["outcome_counts"].get("timeout", 0) for x in sd)
+    succ = sum(x["outcome_counts"].get("success", 0) for x in sd)
+    tot = n_ep * len(sd)
+    dd = Discretizer()
+    vis = data0["state_visits"].sum(axis=0).reshape(dd.shape)
+    share = [vis.sum(axis=tuple(i for i in range(4) if i != ax)) / vis.sum() for ax in range(4)]
+    th_deg = np.rad2deg(dd.bins[2])
+    nth = dd.shape[2]
+    inner = [i for i in range(nth) if 0 < i < nth - 1 and th_deg[i - 1] >= -75 and th_deg[i] <= 75]
+    near = [1, nth - 2]
+    upright_bin = int(np.searchsorted(th_deg, 0.0, side="right"))
+    pct = lambda x: f"{100 * x:.1f}"
+    nums3 = {
+        "oldDurFrom": "705", "oldDurTo": "267--369",
+        "durFirstLast": "; ".join(f"seed {x['seed']}: {first[i]:.0f} to {last[i]:.0f}" for i, x in enumerate(sd)),
+        "durFirstN": nw,
+        "evClass": sd[0]["eval"]["classification"].replace("_", r"\_"),
+        "evMaxDev": span([x["eval"]["max_deviation_from_downward_deg"] for x in sd], 0),
+        "evMinTheta": span([x["eval"]["min_abs_theta_deg"] for x in sd], 0),
+        "evSwitches": span([x["eval"]["torque_switches"] for x in sd]),
+        "evPeaks": span([x["eval"]["n_swing_peaks"] for x in sd]),
+        "evSteps": span([x["eval"]["steps"] for x in sd]),
+        "visFrac": span([100 * x["visited_fraction_final"] for x in sd], 0),
+        "unsafeCount": unsafe, "timeoutCount": timeout, "successCount": succ, "totalEps": tot,
+        "unsafePct": f"{100 * unsafe / tot:.0f}",
+        "phidotCenter": pct(share[1][dd.shape[1] // 2]),
+        "thdotCenter": pct(share[3][dd.shape[3] // 2]),
+        "seamLow": pct(share[2][0]), "seamHigh": pct(share[2][-1]),
+        "thInnerShare": f"{100 * sum(share[2][i] for i in inner):.2f}",
+        "thUprightShare": f"{100 * share[2][upright_bin]:.3f}",
+        "thNearShare": pct(sum(share[2][i] for i in near)),
+        "thSeamBins": f"{0} and {nth - 1}",
+    }
+    write("numbers_exp", [f"\\newcommand{{\\{k}}}{{{v}}}" for k, v in nums3.items()])
 
     # per-variable visit marginals (seed-pooled), for part 6(b)
     d = Discretizer()
