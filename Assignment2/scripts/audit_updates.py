@@ -8,9 +8,9 @@ import math
 
 import numpy as np
 
-from furuta_env import FurutaEnv
-from io_utils import save_json
-from tabular import Discretizer, td_update
+from hw2.task import SwingUpTask
+from hw2.io_utils import save_json
+from hw2.tabular import Discretizer, td_update
 
 ALPHA, GAMMA = 0.1, 0.9
 Q_OLD_SA = 0.5
@@ -20,7 +20,7 @@ A_NEXT = 0                 # an exploratory (non-greedy) next action
 
 def find_transition(disc):
     """Hold +0.02 N m until the discrete state changes; return the real transition."""
-    env = FurutaEnv(seed=0)
+    env = SwingUpTask(seed=0)
     state, _ = env.reset(seed=0)
     for _ in range(500):
         next_state, reward, terminated, truncated, _ = env.step(2)
@@ -33,7 +33,7 @@ def find_transition(disc):
 
 def real_terminal_transition():
     """Record an actual unsafe termination from the environment (arm past +-pi)."""
-    env = FurutaEnv()
+    env = SwingUpTask()
     state, _ = env.reset(initial_state=np.array([3.1, 5.0, np.pi, 0.0]))
     for _ in range(2000):
         next_state, reward, terminated, truncated, info = env.step(1)
@@ -99,7 +99,7 @@ def main():
     terminal = {
         "S_t": state_t, "S_t1": state_t1, "s_t": st, "a_t": a_t, "r_t1": r_term, "s_t1": st1,
         "s_t_tuple": disc.indices(state_t), "s_t1_tuple": disc.indices(state_t1),
-        "source": "real unsafe termination recorded from FurutaEnv (reset to [3.1, 5.0, pi, 0])",
+        "source": "real unsafe termination recorded from SwingUpTask (reset to [3.1, 5.0, pi, 0])",
         "s_t_and_s_t1_share_q_row": st == st1,
         "q_old_sa": Q_OLD_SA,
         "q_next_variants": variants,

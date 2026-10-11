@@ -6,7 +6,9 @@ from typing import Optional, Tuple
 
 import numpy as np
 
-from furuta_env import discretize_state, wrap_to_pi
+import hw2  # noqa: F401  (puts starter/ on sys.path)
+from furuta_env import discretize_state
+from hw2.task import wrap_to_pi
 
 
 def default_bins() -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:

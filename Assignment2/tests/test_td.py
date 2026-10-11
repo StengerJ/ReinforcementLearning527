@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from tabular import td_target, td_update
+from hw2.tabular import td_target, td_update
 
 R, GAMMA, ALPHA = 1.0, 0.9, 0.1
 

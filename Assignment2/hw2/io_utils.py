@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 RESULTS_DIR = ROOT / "results"
 REPORT_DIR = ROOT / "report"
 

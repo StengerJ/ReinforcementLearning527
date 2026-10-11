@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 
-from furuta_env import FurutaEnv
-from tabular import Discretizer
-from training import classify_evaluation, evaluate, moving_average, run_episode, train
+from hw2.task import SwingUpTask
+from hw2.tabular import Discretizer
+from hw2.training import classify_evaluation, evaluate, moving_average, run_episode, train
 
 
 def test_moving_average():
@@ -12,7 +12,7 @@ def test_moving_average():
 
 def test_truncation_still_bootstraps():
     disc = Discretizer()
-    env = FurutaEnv(max_steps=1, seed=0)
+    env = SwingUpTask(max_steps=1, seed=0)
     Q = np.full((disc.n_states, 3), 5.0)
     before = Q.copy()
     rng = np.random.default_rng(0)
@@ -26,7 +26,7 @@ def test_truncation_still_bootstraps():
 
 def test_evaluation_does_not_change_q():
     disc = Discretizer()
-    env = FurutaEnv(max_steps=40, seed=1)
+    env = SwingUpTask(max_steps=40, seed=1)
     Q = np.random.default_rng(0).normal(size=(disc.n_states, 3))
     before = Q.copy()
     ev = evaluate(env, disc, Q, seed=5)
@@ -36,7 +36,7 @@ def test_evaluation_does_not_change_q():
 
 def test_learn_false_leaves_q_unchanged():
     disc = Discretizer()
-    env = FurutaEnv(max_steps=20, seed=0)
+    env = SwingUpTask(max_steps=20, seed=0)
     Q = np.zeros((disc.n_states, 3))
     run_episode(env, disc, Q, np.random.default_rng(0), 1.0, 0.1, 0.99, learn=False)
     assert not Q.any()
@@ -91,7 +91,7 @@ def test_classify_deflection_without_growth_is_not_growing_swing():
 
 def test_evaluate_records_actions_phi_and_unvisited():
     disc = Discretizer()
-    env = FurutaEnv(max_steps=30, seed=1)
+    env = SwingUpTask(max_steps=30, seed=1)
     ev = evaluate(env, disc, np.zeros((disc.n_states, 3)), seed=5)
     assert len(ev["actions"]) == ev["steps"] and len(ev["phi"]) == ev["steps"] + 1
     assert not ev["actions"].any()          # all-zero rows -> lowest index

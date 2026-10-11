@@ -1,9 +1,17 @@
-"""Part 1: verify reset()/step() behavior and episode outcomes."""
+"""Part 1: verify reset()/step() behavior and episode outcomes.
+
+Reports BOTH the unmodified supplied ``FurutaEnv`` (a balancing task: upright
+start, terminates at |theta| > 20 deg) and our ``SwingUpTask`` wrapper (swing-up
+episodes), which documents why the wrapper is needed.
+Run from the project root:  python -m scripts.verify_env
+"""
 
 import numpy as np
 
-from furuta_env import FurutaEnv, wrap_to_pi
-from io_utils import save_json
+import hw2  # noqa: F401  (puts starter/ on sys.path)
+from furuta_env import FurutaEnv
+from hw2.io_utils import save_json
+from hw2.task import SwingUpTask, wrap_to_pi
 
 
 def run_until_done(env, action, limit):
@@ -17,7 +25,7 @@ def run_until_done(env, action, limit):
 
 def counter_reset_scenario(inside_steps=300):
     """Upright counter must reset on leaving the region; success needs 500 steps after re-entry."""
-    e = FurutaEnv()
+    e = SwingUpTask()
     e.reset(initial_state=np.zeros(4))
     for _ in range(inside_steps):
         e.step(1)
@@ -38,10 +46,32 @@ def counter_reset_scenario(inside_steps=300):
             "steps_after_reentry_until_done": steps_after_reentry, "outcome": outcome}
 
 
-def main():
+def raw_env_report():
+    """What the unmodified supplied FurutaEnv does (balancing task)."""
     env = FurutaEnv(seed=0)
     s0, _ = env.reset(seed=0)
+    s1, r, terminated, truncated, info = env.step(2)
+    raw = {
+        "initial_state": s0,
+        "actions": [{"index": i, "torque": float(t)} for i, t in enumerate(env.torque_values)],
+        "transition": {"S_t": s0, "A_t": 2, "R_t1": r, "S_t1": s1,
+                       "terminated": terminated, "truncated": truncated,
+                       "torque": info["torque"]},
+        "angle_limit_deg": float(np.rad2deg(env.angle_limit)),
+    }
+    # Downward start: |theta| ~ pi > 20 deg, so the supplied env terminates on step 1.
+    env.reset(initial_state=np.array([0.0, 0.0, np.pi, 0.0]))
+    _, r_dn, term_dn, trunc_dn, info_dn = env.step(1)
+    raw["downward_start"] = {"steps": env.steps, "terminated": term_dn, "truncated": trunc_dn,
+                             "reward": r_dn, "theta_deg": float(np.rad2deg(info_dn["theta"]))}
+    return raw
+
+
+def main():
+    env = SwingUpTask(seed=0)
+    s0, _ = env.reset(seed=0)
     out = {
+        "raw_env": raw_env_report(),
         "initial_state": s0,
         "initial_theta_wrapped": wrap_to_pi(s0[2]),
         "dt": env.dt,
@@ -55,19 +85,20 @@ def main():
         "theta_wrapped_deg": float(np.rad2deg(info["theta_wrapped"])),
         "terminated": terminated,
         "truncated": truncated,
+        "env_terminated": info["env_terminated"],
     }
 
     outcomes = {}
-    e = FurutaEnv()
+    e = SwingUpTask()
     e.reset(initial_state=np.zeros(4))
     outcomes["success"] = run_until_done(e, 1, 2000)
-    e = FurutaEnv()
+    e = SwingUpTask()
     e.reset(initial_state=np.array([3.1, 5.0, np.pi, 0.0]))
     outcomes["unsafe"] = run_until_done(e, 1, 2000)
-    e = FurutaEnv(max_steps=50, seed=0)
+    e = SwingUpTask(max_steps=50, seed=0)
     e.reset()
     outcomes["timeout"] = run_until_done(e, 1, 2000)
-    e = FurutaEnv(seed=0)
+    e = SwingUpTask(seed=0)
     e.reset(seed=0)
     outcomes["zero_torque_downward_full_episode"] = run_until_done(e, 1, 10_000)
     out["outcomes"] = outcomes

@@ -1,13 +1,17 @@
-"""Turn results/*.json into LaTeX tables so report numbers come from the code."""
+"""Turn results/*.json into LaTeX tables so report numbers come from the code.
+
+Reads results/ and report/template/main_template.tex, writes report/main.tex.
+Run from the project root:  python -m scripts.make_report
+"""
 
 import json
 import re
 
 import numpy as np
 
-from io_utils import REPORT_DIR, RESULTS_DIR
-from tabular import Discretizer
-from training import moving_average
+from hw2.io_utils import REPORT_DIR, RESULTS_DIR
+from hw2.tabular import Discretizer
+from hw2.training import moving_average
 
 BIN_REASONS = {
     "phi": r"Arm must stay in $\pm\pi$ (unsafe limit); coarse, since $\phi$ only matters near the limit.",
@@ -55,7 +59,7 @@ def write(name, lines):
 
 def flatten():
     """Inline every \\input{tables/<name>} of main_template.tex into one main.tex."""
-    text = (REPORT_DIR.parent / "report_build" / "main_template.tex").read_text(encoding="utf-8")
+    text = (REPORT_DIR / "template" / "main_template.tex").read_text(encoding="utf-8")
     text = re.sub(r"\\input\{tables/(\w+)\}", lambda m: CONTENT[m.group(1)].rstrip("\n"), text)
     (REPORT_DIR / "main.tex").write_text(text, encoding="utf-8")
 
@@ -141,6 +145,16 @@ def main():
         "ctrReentry": rc["steps_after_reentry_until_done"], "ctrOutcome": rc["outcome"],
         "zeroSteps": zt["steps"], "zeroTerm": str(zt["terminated"]).lower(),
         "zeroTrunc": str(zt["truncated"]).lower(), "zeroOutcome": zt["outcome"],
+    })
+    raw = env["raw_env"]
+    nums.update({
+        "rawinit": vec_inline(raw["initial_state"]), "rawR": num(raw["transition"]["R_t1"]),
+        "rawTerm": str(raw["transition"]["terminated"]).lower(),
+        "rawlimit": f'{raw["angle_limit_deg"]:g}',
+        "rawDownSteps": raw["downward_start"]["steps"],
+        "rawDownReward": f'${raw["downward_start"]["reward"]:g}$',
+        "rawDownTheta": f'{raw["downward_start"]["theta_deg"]:g}',
+        "rawDownTerm": str(raw["downward_start"]["terminated"]).lower(),
     })
     for k in ("success", "unsafe", "timeout"):
         o = env["outcomes"][k]

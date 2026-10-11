@@ -5,10 +5,10 @@ from collections import Counter
 
 import numpy as np
 
-from furuta_env import FurutaEnv
-from io_utils import RESULTS_DIR, save_json
-from tabular import Discretizer
-from training import swing_peaks, train
+from hw2.task import SwingUpTask
+from hw2.io_utils import RESULTS_DIR, save_json
+from hw2.tabular import Discretizer
+from hw2.training import swing_peaks, train
 
 CONFIG = dict(
     kind="qlearning", seeds=[0, 1, 2], n_episodes=2000, max_steps=1000,
@@ -20,9 +20,9 @@ CONFIG = dict(
 def main():
     cfg = CONFIG
     disc = Discretizer()
-    cfg_out = dict(cfg, dt=FurutaEnv().dt, n_states=disc.n_states, n_actions=3,
+    cfg_out = dict(cfg, dt=SwingUpTask().dt, n_states=disc.n_states, n_actions=3,
                    eps_schedule="linear from eps_start to eps_end over episodes",
-                   max_episode_seconds=cfg["max_steps"] * FurutaEnv().dt)
+                   max_episode_seconds=cfg["max_steps"] * SwingUpTask().dt)
     arrays = {"returns": [], "durations": [], "visited_frac": [], "state_visits": [], "Q": []}
     seeds_out = []
     for seed in cfg["seeds"]:

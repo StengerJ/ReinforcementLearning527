@@ -2,11 +2,11 @@ import json
 
 import pytest
 
-import audit_updates
-import io_utils
-import verify_discretizer
-import verify_env
-import verify_epsilon_greedy
+from scripts import audit_updates
+from hw2 import io_utils
+from scripts import verify_discretizer
+from scripts import verify_env
+from scripts import verify_epsilon_greedy
 
 
 @pytest.fixture(autouse=True)
@@ -19,6 +19,9 @@ def test_verify_env(tmp_results):
     out = verify_env.main()
     assert len(out["actions"]) == 3
     assert out["outside_upright"]["terminated"] is False
+    raw = out["raw_env"]
+    assert raw["downward_start"]["terminated"] is True and raw["downward_start"]["steps"] == 1
+    assert raw["transition"]["terminated"] is False
     assert out["outcomes"]["success"]["outcome"] == "success"
     assert out["outcomes"]["unsafe"]["outcome"] == "unsafe"
     assert out["outcomes"]["timeout"]["outcome"] == "timeout"

@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from io_utils import save_json
-from tabular import action_probabilities, epsilon_greedy
+from hw2.io_utils import save_json
+from hw2.tabular import action_probabilities, epsilon_greedy
 
 SEED = 0
 N_SAMPLES = 10_000

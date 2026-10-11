@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from tabular import action_probabilities, epsilon_greedy, greedy_actions
+from hw2.tabular import action_probabilities, epsilon_greedy, greedy_actions
 
 
 def sample(q_row, eps, n=10_000, seed=0):

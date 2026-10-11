@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from io_utils import save_json
-from tabular import Discretizer
+from hw2.io_utils import save_json
+from hw2.tabular import Discretizer
 
 N_ACTIONS = 3
 

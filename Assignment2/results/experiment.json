@@ -46,7 +46,7 @@
         "n_swing_peaks": 15,
         "unvisited_q_row_steps": 0
       },
-      "runtime_s": 162.39101919997483
+      "runtime_s": 187.90786809986457
     },
     {
       "seed": 1,
@@ -73,7 +73,7 @@
         "n_swing_peaks": 17,
         "unvisited_q_row_steps": 0
       },
-      "runtime_s": 160.692466000095
+      "runtime_s": 167.3365357001312
     },
     {
       "seed": 2,
@@ -100,7 +100,7 @@
         "n_swing_peaks": 16,
         "unvisited_q_row_steps": 0
       },
-      "runtime_s": 160.94844370009378
+      "runtime_s": 165.79586119996384
     }
   ]
 }

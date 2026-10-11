@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from furuta_env import FurutaEnv, wrap_to_pi
-from tabular import Discretizer, epsilon_greedy, td_update
+from hw2.task import SwingUpTask, wrap_to_pi
+from hw2.tabular import Discretizer, epsilon_greedy, td_update
 
 
 def run_episode(
@@ -106,7 +106,7 @@ def train(
     kind="qlearning", disc=None,
 ):
     disc = disc or Discretizer()
-    env = FurutaEnv(max_steps=max_steps, seed=seed)
+    env = SwingUpTask(max_steps=max_steps, seed=seed)
     rng = np.random.default_rng(seed)
     Q = np.zeros((disc.n_states, env.number_of_actions))
     visited = np.zeros(Q.shape, dtype=bool)
@@ -123,7 +123,7 @@ def train(
         )
         returns[ep], durations[ep], visited_frac[ep] = ret, steps, visited.mean()
         outcomes.append(outcome)
-    eval_env = FurutaEnv(max_steps=max_steps, seed=seed)
+    eval_env = SwingUpTask(max_steps=max_steps, seed=seed)
     ev = evaluate(eval_env, disc, Q, seed=10_000 + seed)
     return {
         "Q": Q, "returns": returns, "durations": durations,

@@ -8,21 +8,9 @@ State convention
 ----------------
 x = [phi, phi_dot, theta, theta_dot]
 
-The upright equilibrium is theta = 0 and the downward equilibrium is
-|theta| = pi.  Episodes start near the downward equilibrium (swing-up task).
-The only control input is the torque applied to the horizontal arm.  For a
-tabular agent, an integer action is mapped to one of a small set of torque
-values.
-
-HW2 modification: the supplied starter was a balancing task (upright start,
-termination at 20 degrees).  It was edited so that leaving the upright region
-does NOT terminate an episode, success means holding |wrapToPi(theta)| <= 20
-degrees for five seconds, and ``info["outcome"]``
-reports how an episode ended.  The per-step reward is
-(1 + cos(theta_wrapped)) / 2 (0 at the bottom, 1 upright) minus a tiny torque
-penalty, and -10 for an unsafe termination.  The living reward is non-negative
-so ending an episode early is never better than continuing (a negative living
-reward made crashing into the arm limit look attractive).
+The upright equilibrium is theta = 0.  The only control input is the torque
+applied to the horizontal arm.  For a tabular agent, an integer action is
+mapped to one of a small set of torque values.
 """
 
 from __future__ import annotations
@@ -31,13 +19,6 @@ from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 
 import numpy as np
-
-
-def wrap_to_pi(angle):
-    """Wrap angle(s) to [-pi, pi]; values already in range are returned untouched."""
-    a = np.asarray(angle, dtype=float)
-    wrapped = np.where(np.abs(a) <= np.pi, a, (a + np.pi) % (2.0 * np.pi) - np.pi)
-    return float(wrapped) if wrapped.ndim == 0 else wrapped
 
 
 @dataclass(frozen=True)
@@ -67,12 +48,9 @@ class FurutaEnv:
         arm_angle_limit: float = np.pi,
         process_noise_std: float = 0.0,
         seed: Optional[int] = None,
-        success_hold_seconds: float = 5.0,
     ) -> None:
         self.p = FurutaParameters()
         self.dt = float(dt)
-        self.success_steps = int(round(success_hold_seconds / self.dt))
-        self.upright_steps = 0
         self.max_steps = int(max_steps)
         self.torque_values = np.asarray(torque_values, dtype=float)
         self.angle_limit = float(angle_limit)
@@ -90,18 +68,18 @@ class FurutaEnv:
         self,
         seed: Optional[int] = None,
         initial_state: Optional[np.ndarray] = None,
-    ) -> Tuple[np.ndarray, Dict[str, object]]:
-        """Begin a swing-up episode near the downward equilibrium."""
+    ) -> Tuple[np.ndarray, Dict[str, float]]:
+        """Begin a balancing episode near the upright equilibrium."""
         if seed is not None:
             self.rng = np.random.default_rng(seed)
 
         if initial_state is None:
-            # Near the downward equilibrium; small noise makes episodes differ.
+            # Small random displacement makes repeated episodes non-identical.
             self.state = np.array(
                 [
-                    self.rng.uniform(-0.05, 0.05),
+                    self.rng.uniform(-0.02, 0.02),
                     0.0,
-                    np.pi + self.rng.uniform(-0.05, 0.05),
+                    self.rng.uniform(-0.02, 0.02),
                     0.0,
                 ],
                 dtype=float,
@@ -113,7 +91,6 @@ class FurutaEnv:
             self.state = initial_state.copy()
 
         self.steps = 0
-        self.upright_steps = 0
         return self.state.copy(), {}
 
     def dynamics(self, state: np.ndarray, torque: float) -> np.ndarray:
@@ -173,7 +150,7 @@ class FurutaEnv:
 
     def step(
         self, action: int
-    ) -> Tuple[np.ndarray, float, bool, bool, Dict[str, object]]:
+    ) -> Tuple[np.ndarray, float, bool, bool, Dict[str, float]]:
         """Apply one discrete action and return a Gym-like transition tuple."""
         if not 0 <= int(action) < self.number_of_actions:
             raise ValueError(f"action must be in [0, {self.number_of_actions - 1}]")
@@ -189,42 +166,17 @@ class FurutaEnv:
 
         theta = float(next_state[2])
         phi = float(next_state[0])
-        theta_wrapped = wrap_to_pi(theta)
+        terminated = abs(theta) > self.angle_limit or abs(phi) > self.arm_angle_limit
+        truncated = self.steps >= self.max_steps
 
-        # Leaving the upright region is NOT a termination condition: a swing-up
-        # episode must pass through every angle.  Only the arm limit is unsafe.
-        if abs(theta_wrapped) <= self.angle_limit:
-            self.upright_steps += 1
-        else:
-            self.upright_steps = 0
-
-        unsafe = bool(abs(phi) > self.arm_angle_limit)
-        success = (not unsafe) and self.upright_steps >= self.success_steps
-        terminated = unsafe or success
-        truncated = bool(self.steps >= self.max_steps) and not terminated
-
-        if unsafe:
-            outcome = "unsafe"
-        elif success:
-            outcome = "success"
-        elif truncated:
-            outcome = "timeout"
-        else:
-            outcome = None
-
-        # Non-negative living reward: terminating is never better than surviving.
-        reward = float(0.5 * (1.0 + np.cos(theta_wrapped)) - 0.001 * torque**2)
-        if unsafe:
+        # A dense balancing reward.  Students may be asked to justify and test
+        # an alternative reward as a project design decision.
+        reward = 1.0 - (theta / self.angle_limit) ** 2 - 0.001 * torque**2
+        if terminated:
             reward = -10.0
 
-        info = {
-            "torque": torque,
-            "theta": theta,
-            "theta_wrapped": theta_wrapped,
-            "phi": phi,
-            "outcome": outcome,
-        }
-        return self.state.copy(), reward, terminated, truncated, info
+        info = {"torque": torque, "theta": theta, "phi": phi}
+        return self.state.copy(), float(reward), terminated, truncated, info
 
 
 def discretize_state(

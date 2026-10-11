@@ -73,7 +73,7 @@
       12,
       3
     ],
-    "source": "real unsafe termination recorded from FurutaEnv (reset to [3.1, 5.0, pi, 0])",
+    "source": "real unsafe termination recorded from SwingUpTask (reset to [3.1, 5.0, pi, 0])",
     "s_t_and_s_t1_share_q_row": true,
     "q_old_sa": 0.5,
     "q_next_variants": [

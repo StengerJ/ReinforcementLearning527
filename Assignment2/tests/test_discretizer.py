@@ -3,7 +3,7 @@ import itertools
 import numpy as np
 import pytest
 
-from tabular import Discretizer
+from hw2.tabular import Discretizer
 
 
 @pytest.fixture
