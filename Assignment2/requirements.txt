@@ -1,2 +1,3 @@
 numpy>=1.24
 matplotlib>=3.7
+imageio-ffmpeg>=0.5  # only for stenger_hw2_make_video.py
