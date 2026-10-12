@@ -1,15 +1,3 @@
-"""HW2 Part 5: preliminary Q-learning experiment on the supplied FurutaEnv.
-
-The environment is used exactly as supplied: reset() starts near upright and
-an episode terminates when |theta| > 20 deg or |phi| > pi, so this is the
-balancing task the starter implements.  The 5-second objective is measured
-here from the returned states (500 consecutive steps with |theta_wrapped| <= 20 deg);
-the environment itself does not report success.
-
-Run:  python stenger_hw2_experiment.py      (about a few minutes)
-Outputs: results/part5_seed{N}.npz, results/part5_summary.json, report/figures/*.png
-"""
-
 import json
 import sys
 import time
@@ -18,16 +6,16 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
+import matplotlib.pyplot as plt
+import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "futura_env"))
-from furuta_env import FurutaEnv  # noqa: E402
+from furuta_env import FurutaEnv
 
-from stenger_hw2_audit import td_update  # noqa: E402
-from stenger_hw2_epsilon_greedy import epsilon_greedy  # noqa: E402
-from stenger_hw2_state_discretization import N_ACTIONS, N_STATES, SHAPE, state_index, wrap_to_pi  # noqa: E402
+from stenger_hw2_audit import td_update
+from stenger_hw2_epsilon_greedy import epsilon_greedy
+from stenger_hw2_state_discretization import N_ACTIONS, N_STATES, SHAPE, state_index, wrap_to_pi
 
 RESULTS = HERE / "results"
 FIGURES = HERE / "report" / "figures"
@@ -40,11 +28,11 @@ CONFIG = {
     "gamma": 0.99,
     "epsilon_start": 1.0,
     "epsilon_end": 0.05,
-    "epsilon_decay_episodes": 1000,   # linear decay, then held at epsilon_end
+    "epsilon_decay_episodes": 1000,
     "q_init": 0.0,
-    "max_steps": 2000,                # env default: 2000 * 0.01 s = 20 s
+    "max_steps": 2000,
     "dt": 0.01,
-    "eval_seed_offset": 10_000,       # evaluation reset seed = 10000 + training seed
+    "eval_seed_offset": 10_000,
     "moving_average_window": 50,
     "upright_deg": 20.0,
     "success_seconds": 5.0,
@@ -57,7 +45,6 @@ def epsilon_at(episode):
 
 
 def longest_upright_run(theta_wrapped):
-    """Longest run of consecutive samples with |theta_wrapped| <= 20 deg."""
     best = run = 0
     for inside in np.abs(theta_wrapped) <= np.deg2rad(CONFIG["upright_deg"]):
         run = run + 1 if inside else 0
@@ -86,7 +73,6 @@ def train(seed):
             s2 = state_index(next_state)
             visited[s, a] = True
             state_visits[s] += 1
-            # Q-learning: the target uses max_a Q(S', a); next_action is unused.
             td_update(q, s, a, "qlearning", reward, CONFIG["gamma"], CONFIG["alpha"],
                       s2, None, terminated)
             total += reward
@@ -99,7 +85,6 @@ def train(seed):
 
 
 def evaluate(q, seed):
-    """Greedy rollout: Q frozen (read only), epsilon = 0, no updates."""
     q = q.copy()
     q.setflags(write=False)
     env = FurutaEnv(seed=seed, max_steps=CONFIG["max_steps"], dt=CONFIG["dt"])
@@ -142,7 +127,6 @@ def main():
                  coverage=coverage, terminated=term, state_visits=state_visits,
                  eval_theta=theta, eval_phi=phi, eval_actions=actions)
 
-        # Visits per theta bin and per velocity bin (for the reflection).
         visits = state_visits.reshape(SHAPE)
         rec = {
             "seed": seed,
@@ -175,7 +159,6 @@ def main():
 
     (RESULTS / "part5_summary.json").write_text(json.dumps(summary, indent=2))
 
-    # ---- Figures (one panel per diagnostic, all seeds overlaid) ----
     episodes = np.arange(1, CONFIG["episodes"] + 1)
     colors = {0: "tab:blue", 1: "tab:orange", 2: "tab:green"}
 

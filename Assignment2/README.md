@@ -22,8 +22,6 @@ python -m pip install -r requirements.txt
 | `python stenger_hw2_audit.py` | 4. SARSA / Q-learning update audit | `results/part4_audit.json` |
 | `python stenger_hw2_experiment.py` | 5. Q-learning, seeds 0,1,2 (a few minutes) | `results/part5_*.npz`, `results/part5_summary.json`, `report/figures/*.png` |
 | `python stenger_hw2_verification.py` | automated assert checks of all components | console PASS/FAIL |
-| `python stenger_hw2_make_video.py` | narrated video walkthrough (Windows voice; run Parts 4–5 first) | `report/figures/hw2_explainer.mp4` |
-
 All runs are seeded, so re-running reproduces the reported numbers and figures.
 
 ## Report

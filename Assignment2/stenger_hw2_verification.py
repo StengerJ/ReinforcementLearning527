@@ -1,11 +1,3 @@
-"""HW2: automated verification of every component (no training required).
-
-Each check is a plain assert, so a silent implementation error stops the run
-instead of hiding inside a noisy return curve.
-
-Run:  python stenger_hw2_verification.py
-"""
-
 import sys
 from pathlib import Path
 
@@ -13,11 +5,11 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "futura_env"))
-from furuta_env import FurutaEnv  # noqa: E402
+from furuta_env import FurutaEnv
 
-from stenger_hw2_audit import td_target, td_update  # noqa: E402
-from stenger_hw2_epsilon_greedy import action_probabilities, epsilon_greedy  # noqa: E402
-from stenger_hw2_state_discretization import (  # noqa: E402
+from stenger_hw2_audit import td_target, td_update
+from stenger_hw2_epsilon_greedy import action_probabilities, epsilon_greedy
+from stenger_hw2_state_discretization import (
     BINS, N_ACTIONS, N_STATES, SHAPE, discretize, state_index, wrap_to_pi)
 
 
@@ -59,7 +51,6 @@ def test_discretizer():
     extreme = rng.uniform(-100, 100, size=(2000, 4))
     flat = [state_index(s) for s in extreme]
     check("extreme states map to valid indices", min(flat) >= 0 and max(flat) < N_STATES)
-    # phi_dot edges are [-3, -1.5, 0, 1.5, 3]; bin 3 = [0, 1.5), bin 4 = [1.5, 3).
     check("value on an edge goes to the upper bin", discretize([0, 1.5, 0, 0])[1] == 4)
     check("value just below an edge stays in the lower bin", discretize([0, 1.4999, 0, 0])[1] == 3)
     check("upright and downward map to different theta bins",

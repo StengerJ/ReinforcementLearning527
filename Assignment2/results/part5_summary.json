@@ -30,7 +30,7 @@
   "seeds": [
     {
       "seed": 0,
-      "runtime_s": 31.7,
+      "runtime_s": 21.1,
       "first_100_mean_return": 36.11662911445588,
       "last_100_mean_return": 212.23729276126048,
       "first_100_mean_duration_s": 0.5406000000000001,
@@ -94,7 +94,7 @@
     },
     {
       "seed": 1,
-      "runtime_s": 40.7,
+      "runtime_s": 25.5,
       "first_100_mean_return": 36.04580255421161,
       "last_100_mean_return": 320.15715851827787,
       "first_100_mean_duration_s": 0.5414,
@@ -158,7 +158,7 @@
     },
     {
       "seed": 2,
-      "runtime_s": 41.5,
+      "runtime_s": 26.7,
       "first_100_mean_return": 40.51381696520025,
       "last_100_mean_return": 430.3680717675192,
       "first_100_mean_duration_s": 0.5851,

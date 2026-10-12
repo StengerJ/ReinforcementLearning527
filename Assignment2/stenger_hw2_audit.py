@@ -1,13 +1,3 @@
-"""HW2 Part 4: audit one SARSA and one Q-learning update.
-
-Both transitions are produced by the supplied FurutaEnv (unchanged).  All
-quantities are stored BEFORE the update; the targets and new values are then
-computed twice -- once "by hand" from the stored numbers and once by the
-td_update function used in training -- and the two must agree.
-
-Run:  python stenger_hw2_audit.py
-"""
-
 import json
 import sys
 from pathlib import Path
@@ -16,10 +6,10 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "futura_env"))
-from furuta_env import FurutaEnv  # noqa: E402
+from furuta_env import FurutaEnv
 
-from stenger_hw2_epsilon_greedy import epsilon_greedy  # noqa: E402
-from stenger_hw2_state_discretization import N_ACTIONS, N_STATES, discretize, state_index  # noqa: E402
+from stenger_hw2_epsilon_greedy import epsilon_greedy
+from stenger_hw2_state_discretization import N_ACTIONS, N_STATES, discretize, state_index
 
 RESULTS = HERE / "results"
 ALPHA = 0.1
@@ -28,10 +18,6 @@ SEED = 4
 
 
 def td_target(kind, reward, gamma, q_next_row, next_action, terminated):
-    """Y = R + gamma * continuation.  Continuation is 0 only if ``terminated``.
-
-    Time-limit truncation is not a true terminal state, so it still bootstraps.
-    """
     if terminated:
         return float(reward)
     if kind == "sarsa":
@@ -42,14 +28,12 @@ def td_target(kind, reward, gamma, q_next_row, next_action, terminated):
 
 
 def td_update(q, s, a, kind, reward, gamma, alpha, s_next, next_action, terminated):
-    """In place: Q(s,a) <- Q(s,a) + alpha * (Y - Q(s,a)).  Returns Y."""
     target = td_target(kind, reward, gamma, q[s_next], next_action, terminated)
     q[s, a] += alpha * (target - q[s, a])
     return target
 
 
 def audit(name, q, s, a, r, s2, a2, terminated, state, next_state):
-    """Store, compute by hand, run td_update on copies, and compare."""
     q_old_sa = float(q[s, a])
     q_old_next = q[s2].copy()
     cont = 0.0 if terminated else 1.0
@@ -63,7 +47,6 @@ def audit(name, q, s, a, r, s2, a2, terminated, state, next_state):
     prog_y_q = td_update(q_q, s, a, "qlearning", r, GAMMA, ALPHA, s2, a2, terminated)
     assert np.isclose(prog_y_sarsa, y_sarsa) and np.isclose(q_s[s, a], new_sarsa)
     assert np.isclose(prog_y_q, y_q) and np.isclose(q_q[s, a], new_q)
-    # Only the one audited entry may change.
     assert np.count_nonzero(q_s != q) <= 1 and np.count_nonzero(q_q != q) <= 1
 
     rec = {
@@ -92,10 +75,8 @@ def audit(name, q, s, a, r, s2, a2, terminated, state, next_state):
 
 def main():
     rng = np.random.default_rng(SEED)
-    # Rounded random values make next-state action values distinct and easy to read.
     q = np.round(rng.uniform(0.0, 5.0, size=(N_STATES, N_ACTIONS)), 2)
 
-    # 1) Nonterminal transition from the environment's own reset().
     env = FurutaEnv(seed=SEED)
     state, _ = env.reset()
     s = state_index(state)
@@ -103,22 +84,19 @@ def main():
     next_state, r, terminated, truncated, _ = env.step(a)
     assert not terminated and not truncated
     s2 = state_index(next_state)
-    # Force A_{t+1} to be a NON-greedy action so the two targets differ.
     a2 = int(np.argmin(q[s2]))
     assert len(set(q[s2])) > 1, "next-state values must not all be equal"
     rec1 = audit("nonterminal", q, s, a, r, s2, a2, terminated, state, next_state)
 
-    # A_{t+1} drawn by the behaviour policy as in real training (for reference).
     rec1["A_next_policy_sample"] = epsilon_greedy(q[s2], 0.1, rng)
 
-    # 2) Terminal transition: start just inside the 20-degree limit, moving outward.
     state = np.array([0.0, 0.0, np.deg2rad(19.9), 2.0])
     env.reset(initial_state=state)
     a = 1
     next_state, r, terminated, truncated, _ = env.step(a)
     assert terminated, "this transition must leave the 20-degree region"
     s, s2 = state_index(state), state_index(next_state)
-    q[s2] = [100.0, 200.0, 300.0]  # large values that must be IGNORED
+    q[s2] = [100.0, 200.0, 300.0]
     a2 = 2
     rec2 = audit("terminal", q, s, a, r, s2, a2, terminated, state, next_state)
 
