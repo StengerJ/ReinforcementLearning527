@@ -1,0 +1,39 @@
+=== example_run.py (supplied, unmodified) ===
+final state: [-0.2205206  -1.30635932  0.35630747  2.41930909]
+last applied torque: 0.0
+episode return: 36.8867610480835
+steps: 55
+
+=== supplied defaults read from FurutaEnv ===
+dt = 0.01 s, max_steps = 2000 (20 s)
+torque_values = [-0.02, 0.0, 0.02] N m
+angle_limit = 20.0 deg (raw theta), arm_angle_limit = 3.1416 rad
+built-in reward = 1 - (theta/angle_limit)^2 - 0.001 u^2, and -10 on termination
+
+=== state components after reset() ===
+  phi (arm angle, rad)               = +0.00500
+  phi_dot (arm rate, rad/s)          = +0.00000
+  theta (pendulum angle, rad)        = +0.01589
+  theta_dot (pendulum rate, rad/s)   = +0.00000
+  info from reset() = {}
+
+=== every legal action, from the same state ===
+  action 0: torque reported = -0.020 N m, reward = 0.997821, terminated = False, truncated = False
+  action 1: torque reported = +0.000 N m, reward = 0.997918, terminated = False, truncated = False
+  action 2: torque reported = +0.020 N m, reward = 0.998012, terminated = False, truncated = False
+  action 3 rejected: action must be in [0, 2]
+
+=== swing-up configuration (constructor arguments only) ===
+angle_limit = inf, arm_angle_limit = 3.1416
+downward start: state = [0.0, 0.03972, 3.16343, 0.02757], wrapped theta = -178.75 deg
+one continuing transition with A=2: S' = [0.00093, 0.14571, 3.16401, 0.08989], R = -1.00015, terminal = False, done = False
+
+=== episode outcomes ===
+success     : |wrapped theta| <= 20 deg for 500 consecutive steps (5 s); counted by the agent loop, demonstrated by the evaluation episodes
+unsafe      : constant +torque from downward -> outcome 'unsafe' after 107 steps, |phi| = 3.198 > pi, R = -200.0
+time limit  : zero torque, max_steps=50 -> (terminated, truncated) at step 50 = (False, True)
+balance task: zero torque from near upright -> outcome 'fell' after 67 steps (0.67 s), R = -10.0
+
+=== who chooses what ===
+agent      : action A_t (index 0/1/2), discretization, Q table, epsilon, alpha, gamma, swing-up reward
+environment: next state S_{t+1}, applied torque, built-in reward, terminated (limits), truncated (max_steps)

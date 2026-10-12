@@ -1,0 +1,86 @@
+=== balance discretization ===
+  phi        5 bins, interior edges  [-1.0, -0.3, 0.3, 1.0]
+  phi_dot    6 bins, interior edges  [-1.5, -0.3, 0.0, 0.3, 1.5]
+  theta~    10 bins, interior edges deg [-12.0, -6.0, -3.0, -1.0, 0.0, 1.0, 3.0, 6.0, 12.0]
+  theta_dot 10 bins, interior edges  [-2.0, -1.0, -0.4, -0.1, 0.0, 0.1, 0.4, 1.0, 2.0]
+  states |S| = 5 x 6 x 10 x 10 = 3000
+  Q-table entries |S| x |A| = 3000 x 3 = 9000
+  boundary tests (other components held at 0, theta~ test uses raw theta):
+    phi       =      -3.000000 -> bin  0 of 5, flat 355
+    phi       =      -1.000001 -> bin  0 of 5, flat 355
+    phi       =      -1.000000 -> bin  1 of 5, flat 955
+    phi       =      +0.000000 -> bin  2 of 5, flat 1555
+    phi       =      +0.999999 -> bin  3 of 5, flat 2155
+    phi       =      +1.000000 -> bin  4 of 5, flat 2755
+    phi       =      +3.000000 -> bin  4 of 5, flat 2755
+    phi       = +1000000.000000 -> bin  4 of 5, flat 2755
+    phi_dot   =      -4.500000 -> bin  0 of 6, flat 1255
+    phi_dot   =      -1.500001 -> bin  0 of 6, flat 1255
+    phi_dot   =      -1.500000 -> bin  1 of 6, flat 1355
+    phi_dot   =      +0.000000 -> bin  3 of 6, flat 1555
+    phi_dot   =      +1.499999 -> bin  4 of 6, flat 1655
+    phi_dot   =      +1.500000 -> bin  5 of 6, flat 1755
+    phi_dot   =      +4.500000 -> bin  5 of 6, flat 1755
+    phi_dot   = +1000000.000000 -> bin  5 of 6, flat 1755
+    theta~    =      -3.141593 -> bin  0 of 10, flat 1505
+    theta~    =      -3.140593 -> bin  0 of 10, flat 1505
+    theta~    =      -0.209440 -> bin  1 of 10, flat 1515
+    theta~    =      +0.000000 -> bin  5 of 10, flat 1555
+    theta~    =      +0.209440 -> bin  9 of 10, flat 1595
+    theta~    =      +3.140593 -> bin  9 of 10, flat 1595
+    theta~    =      +3.141593 -> bin  9 of 10, flat 1595
+    theta~    =      +4.712389 -> bin  0 of 10, flat 1505
+    theta~    =      -4.712389 -> bin  9 of 10, flat 1595
+    theta_dot =      -6.000000 -> bin  0 of 10, flat 1550
+    theta_dot =      -2.000001 -> bin  0 of 10, flat 1550
+    theta_dot =      -2.000000 -> bin  1 of 10, flat 1551
+    theta_dot =      +0.000000 -> bin  5 of 10, flat 1555
+    theta_dot =      +1.999999 -> bin  8 of 10, flat 1558
+    theta_dot =      +2.000000 -> bin  9 of 10, flat 1559
+    theta_dot =      +6.000000 -> bin  9 of 10, flat 1559
+    theta_dot = +1000000.000000 -> bin  9 of 10, flat 1559
+  upright theta~ bin = 5, downward theta~ bin = 9
+
+=== swingup discretization ===
+  phi        7 bins, interior edges  [-2.0, -1.0, -0.3, 0.3, 1.0, 2.0]
+  phi_dot    8 bins, interior edges  [-3.0, -1.5, -0.3, 0.0, 0.3, 1.5, 3.0]
+  theta~    18 bins, interior edges deg [-135.0, -90.0, -45.0, -20.0, -12.0, -6.0, -3.0, -1.0, 0.0, 1.0, 3.0, 6.0, 12.0, 20.0, 45.0, 90.0, 135.0]
+  theta_dot 14 bins, interior edges  [-8.0, -4.0, -2.0, -1.0, -0.4, -0.1, 0.0, 0.1, 0.4, 1.0, 2.0, 4.0, 8.0]
+  states |S| = 7 x 8 x 18 x 14 = 14112
+  Q-table entries |S| x |A| = 14112 x 3 = 42336
+  boundary tests (other components held at 0, theta~ test uses raw theta):
+    phi       =      -6.000000 -> bin  0 of 7, flat 1141
+    phi       =      -2.000001 -> bin  0 of 7, flat 1141
+    phi       =      -2.000000 -> bin  1 of 7, flat 3157
+    phi       =      +0.000000 -> bin  3 of 7, flat 7189
+    phi       =      +1.999999 -> bin  5 of 7, flat 11221
+    phi       =      +2.000000 -> bin  6 of 7, flat 13237
+    phi       =      +6.000000 -> bin  6 of 7, flat 13237
+    phi       = +1000000.000000 -> bin  6 of 7, flat 13237
+    phi_dot   =      -9.000000 -> bin  0 of 8, flat 6181
+    phi_dot   =      -3.000001 -> bin  0 of 8, flat 6181
+    phi_dot   =      -3.000000 -> bin  1 of 8, flat 6433
+    phi_dot   =      +0.000000 -> bin  4 of 8, flat 7189
+    phi_dot   =      +2.999999 -> bin  6 of 8, flat 7693
+    phi_dot   =      +3.000000 -> bin  7 of 8, flat 7945
+    phi_dot   =      +9.000000 -> bin  7 of 8, flat 7945
+    phi_dot   = +1000000.000000 -> bin  7 of 8, flat 7945
+    theta~    =      -3.141593 -> bin  0 of 18, flat 7063
+    theta~    =      -3.140593 -> bin  0 of 18, flat 7063
+    theta~    =      -2.356194 -> bin  1 of 18, flat 7077
+    theta~    =      +0.000000 -> bin  9 of 18, flat 7189
+    theta~    =      +2.356194 -> bin 17 of 18, flat 7301
+    theta~    =      +3.140593 -> bin 17 of 18, flat 7301
+    theta~    =      +3.141593 -> bin 17 of 18, flat 7301
+    theta~    =      +4.712389 -> bin  2 of 18, flat 7091
+    theta~    =      -4.712389 -> bin 16 of 18, flat 7287
+    theta_dot =     -24.000000 -> bin  0 of 14, flat 7182
+    theta_dot =      -8.000001 -> bin  0 of 14, flat 7182
+    theta_dot =      -8.000000 -> bin  1 of 14, flat 7183
+    theta_dot =      +0.000000 -> bin  7 of 14, flat 7189
+    theta_dot =      +7.999999 -> bin 12 of 14, flat 7194
+    theta_dot =      +8.000000 -> bin 13 of 14, flat 7195
+    theta_dot =     +24.000000 -> bin 13 of 14, flat 7195
+    theta_dot = +1000000.000000 -> bin 13 of 14, flat 7195
+  upright theta~ bin = 9, downward theta~ bin = 17
+

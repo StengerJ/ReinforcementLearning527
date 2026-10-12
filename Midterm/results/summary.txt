@@ -1,0 +1,309 @@
+
+==================== balance ====================
+task: {'name': 'balance', 'swing_up': False, 'bins': '(see part2_discretization.txt)', 'max_steps': 2000, 'lambda_phi': 0.1, 'lambda_u': 1.0, 'success_bonus': 100.0, 'unsafe_penalty': -200.0, 'init_angle_deg': 5.0, 'init_rate': 0.05, 'decision_steps': 1, 'upright_start_fraction': 0.0, 'fine_control_deg': 0.0}
+hyperparameters: {'episodes': 2000, 'alpha': 0.1, 'gamma': 0.99, 'epsilon_start': 1.0, 'epsilon_end': 0.01, 'epsilon_decay_fraction': 0.7, 'q_init': 100.0}
+states = 3000, Q entries = 9000, train seeds = (0, 1, 2), eval seeds = 10000..10019
+
+SARSA train seed 0
+  training: last-10% mean return 1428.8, last-10% success 92.5%, final Q-entry coverage 32.2%
+  eval success_rate = 1.000
+  eval return_mean = 1706.068
+  eval return_std = 453.961
+  eval reached_upright = 20
+  eval never_upright = 0
+  eval time_to_upright_mean_s = 0.010
+  eval duration_mean_s = 17.110
+  eval longest_hold_mean_s = 17.107
+  eval closest_approach_mean_deg = 0.000
+  eval outcomes = {'success': 0, 'unsafe': 0, 'fell': 6, 'time-limit': 14}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: time-limit, 0.01, 20.00, 2000; 10001: time-limit, 0.01, 20.00, 2000; 10002: time-limit, 0.01, 20.00, 2000; 10003: fell, 0.01, 8.40, 825; 10004: time-limit, 0.01, 20.00, 2000; 10005: time-limit, 0.01, 20.00, 2000; 10006: fell, 0.01, 10.55, 1039; 10007: fell, 0.01, 10.77, 1061; 10008: time-limit, 0.01, 20.00, 2000; 10009: time-limit, 0.01, 20.00, 2000; 10010: fell, 0.01, 11.88, 1173; 10011: time-limit, 0.01, 20.00, 2000; 10012: time-limit, 0.01, 20.00, 2000; 10013: time-limit, 0.01, 20.00, 2000; 10014: fell, 0.01, 11.42, 1127; 10015: time-limit, 0.01, 20.00, 2000; 10016: time-limit, 0.01, 20.00, 2000; 10017: time-limit, 0.01, 20.00, 2000; 10018: fell, 0.01, 9.12, 896; 10019: time-limit, 0.01, 20.00, 2000
+
+SARSA train seed 1
+  training: last-10% mean return 1830.6, last-10% success 97.5%, final Q-entry coverage 31.2%
+  eval success_rate = 1.000
+  eval return_mean = 1999.575
+  eval return_std = 0.111
+  eval reached_upright = 20
+  eval never_upright = 0
+  eval time_to_upright_mean_s = 0.010
+  eval duration_mean_s = 20.000
+  eval longest_hold_mean_s = 20.000
+  eval closest_approach_mean_deg = 0.000
+  eval outcomes = {'success': 0, 'unsafe': 0, 'fell': 0, 'time-limit': 20}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: time-limit, 0.01, 20.00, 1999; 10001: time-limit, 0.01, 20.00, 2000; 10002: time-limit, 0.01, 20.00, 2000; 10003: time-limit, 0.01, 20.00, 2000; 10004: time-limit, 0.01, 20.00, 2000; 10005: time-limit, 0.01, 20.00, 2000; 10006: time-limit, 0.01, 20.00, 2000; 10007: time-limit, 0.01, 20.00, 2000; 10008: time-limit, 0.01, 20.00, 1999; 10009: time-limit, 0.01, 20.00, 1999; 10010: time-limit, 0.01, 20.00, 2000; 10011: time-limit, 0.01, 20.00, 1999; 10012: time-limit, 0.01, 20.00, 1999; 10013: time-limit, 0.01, 20.00, 2000; 10014: time-limit, 0.01, 20.00, 2000; 10015: time-limit, 0.01, 20.00, 2000; 10016: time-limit, 0.01, 20.00, 2000; 10017: time-limit, 0.01, 20.00, 2000; 10018: time-limit, 0.01, 20.00, 2000; 10019: time-limit, 0.01, 20.00, 2000
+
+SARSA train seed 2
+  training: last-10% mean return 1820.7, last-10% success 97.0%, final Q-entry coverage 33.5%
+  eval success_rate = 1.000
+  eval return_mean = 1999.981
+  eval return_std = 0.018
+  eval reached_upright = 20
+  eval never_upright = 0
+  eval time_to_upright_mean_s = 0.010
+  eval duration_mean_s = 20.000
+  eval longest_hold_mean_s = 20.000
+  eval closest_approach_mean_deg = 0.000
+  eval outcomes = {'success': 0, 'unsafe': 0, 'fell': 0, 'time-limit': 20}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: time-limit, 0.01, 20.00, 2000; 10001: time-limit, 0.01, 20.00, 2000; 10002: time-limit, 0.01, 20.00, 2000; 10003: time-limit, 0.01, 20.00, 2000; 10004: time-limit, 0.01, 20.00, 2000; 10005: time-limit, 0.01, 20.00, 2000; 10006: time-limit, 0.01, 20.00, 2000; 10007: time-limit, 0.01, 20.00, 2000; 10008: time-limit, 0.01, 20.00, 2000; 10009: time-limit, 0.01, 20.00, 2000; 10010: time-limit, 0.01, 20.00, 2000; 10011: time-limit, 0.01, 20.00, 2000; 10012: time-limit, 0.01, 20.00, 2000; 10013: time-limit, 0.01, 20.00, 2000; 10014: time-limit, 0.01, 20.00, 2000; 10015: time-limit, 0.01, 20.00, 2000; 10016: time-limit, 0.01, 20.00, 2000; 10017: time-limit, 0.01, 20.00, 2000; 10018: time-limit, 0.01, 20.00, 2000; 10019: time-limit, 0.01, 20.00, 2000
+
+SARSA pooled over 3 seeds x 20 eval episodes: success 100.0%, return 1901.9 +- 296.4, reached upright 60/60, time to upright 0.01 s, duration 19.04 s
+
+Q-learning train seed 0
+  training: last-10% mean return 1580.4, last-10% success 96.5%, final Q-entry coverage 27.7%
+  eval success_rate = 1.000
+  eval return_mean = 1944.572
+  eval return_std = 241.530
+  eval reached_upright = 20
+  eval never_upright = 0
+  eval time_to_upright_mean_s = 0.010
+  eval duration_mean_s = 19.456
+  eval longest_hold_mean_s = 19.455
+  eval closest_approach_mean_deg = 0.000
+  eval outcomes = {'success': 0, 'unsafe': 0, 'fell': 1, 'time-limit': 19}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: time-limit, 0.01, 20.00, 2000; 10001: time-limit, 0.01, 20.00, 2000; 10002: time-limit, 0.01, 20.00, 2000; 10003: fell, 0.01, 9.10, 892; 10004: time-limit, 0.01, 20.00, 2000; 10005: time-limit, 0.01, 20.00, 2000; 10006: time-limit, 0.01, 20.00, 2000; 10007: time-limit, 0.01, 20.00, 2000; 10008: time-limit, 0.01, 20.00, 2000; 10009: time-limit, 0.01, 20.00, 2000; 10010: time-limit, 0.01, 20.00, 2000; 10011: time-limit, 0.01, 20.00, 2000; 10012: time-limit, 0.01, 20.00, 2000; 10013: time-limit, 0.01, 20.00, 2000; 10014: time-limit, 0.01, 20.00, 2000; 10015: time-limit, 0.01, 20.00, 2000; 10016: time-limit, 0.01, 20.00, 2000; 10017: time-limit, 0.01, 20.00, 2000; 10018: time-limit, 0.01, 20.00, 2000; 10019: time-limit, 0.01, 20.00, 2000
+
+Q-learning train seed 1
+  training: last-10% mean return 1756.4, last-10% success 99.0%, final Q-entry coverage 27.5%
+  eval success_rate = 1.000
+  eval return_mean = 1999.973
+  eval return_std = 0.005
+  eval reached_upright = 20
+  eval never_upright = 0
+  eval time_to_upright_mean_s = 0.010
+  eval duration_mean_s = 20.000
+  eval longest_hold_mean_s = 20.000
+  eval closest_approach_mean_deg = 0.000
+  eval outcomes = {'success': 0, 'unsafe': 0, 'fell': 0, 'time-limit': 20}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: time-limit, 0.01, 20.00, 2000; 10001: time-limit, 0.01, 20.00, 2000; 10002: time-limit, 0.01, 20.00, 2000; 10003: time-limit, 0.01, 20.00, 2000; 10004: time-limit, 0.01, 20.00, 2000; 10005: time-limit, 0.01, 20.00, 2000; 10006: time-limit, 0.01, 20.00, 2000; 10007: time-limit, 0.01, 20.00, 2000; 10008: time-limit, 0.01, 20.00, 2000; 10009: time-limit, 0.01, 20.00, 2000; 10010: time-limit, 0.01, 20.00, 2000; 10011: time-limit, 0.01, 20.00, 2000; 10012: time-limit, 0.01, 20.00, 2000; 10013: time-limit, 0.01, 20.00, 2000; 10014: time-limit, 0.01, 20.00, 2000; 10015: time-limit, 0.01, 20.00, 2000; 10016: time-limit, 0.01, 20.00, 2000; 10017: time-limit, 0.01, 20.00, 2000; 10018: time-limit, 0.01, 20.00, 2000; 10019: time-limit, 0.01, 20.00, 2000
+
+Q-learning train seed 2
+  training: last-10% mean return 1827.0, last-10% success 99.5%, final Q-entry coverage 27.7%
+  eval success_rate = 1.000
+  eval return_mean = 1999.957
+  eval return_std = 0.093
+  eval reached_upright = 20
+  eval never_upright = 0
+  eval time_to_upright_mean_s = 0.010
+  eval duration_mean_s = 20.000
+  eval longest_hold_mean_s = 20.000
+  eval closest_approach_mean_deg = 0.000
+  eval outcomes = {'success': 0, 'unsafe': 0, 'fell': 0, 'time-limit': 20}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: time-limit, 0.01, 20.00, 2000; 10001: time-limit, 0.01, 20.00, 2000; 10002: time-limit, 0.01, 20.00, 2000; 10003: time-limit, 0.01, 20.00, 2000; 10004: time-limit, 0.01, 20.00, 2000; 10005: time-limit, 0.01, 20.00, 2000; 10006: time-limit, 0.01, 20.00, 2000; 10007: time-limit, 0.01, 20.00, 2000; 10008: time-limit, 0.01, 20.00, 2000; 10009: time-limit, 0.01, 20.00, 2000; 10010: time-limit, 0.01, 20.00, 2000; 10011: time-limit, 0.01, 20.00, 2000; 10012: time-limit, 0.01, 20.00, 2000; 10013: time-limit, 0.01, 20.00, 2000; 10014: time-limit, 0.01, 20.00, 2000; 10015: time-limit, 0.01, 20.00, 2000; 10016: time-limit, 0.01, 20.00, 2000; 10017: time-limit, 0.01, 20.00, 2000; 10018: time-limit, 0.01, 20.00, 2000; 10019: time-limit, 0.01, 20.00, 2000
+
+Q-learning pooled over 3 seeds x 20 eval episodes: success 100.0%, return 1981.5 +- 141.9, reached upright 60/60, time to upright 0.01 s, duration 19.82 s
+
+==================== swingup ====================
+task: {'name': 'swingup', 'swing_up': True, 'bins': '(see part2_discretization.txt)', 'max_steps': 2000, 'lambda_phi': 0.1, 'lambda_u': 1.0, 'success_bonus': 100.0, 'unsafe_penalty': -200.0, 'init_angle_deg': 5.0, 'init_rate': 0.05, 'decision_steps': 5, 'upright_start_fraction': 0.0, 'fine_control_deg': 25.0}
+hyperparameters: {'episodes': 6000, 'alpha': 0.1, 'gamma': 0.99, 'epsilon_start': 1.0, 'epsilon_end': 0.01, 'epsilon_decay_fraction': 0.7, 'q_init': 0.0}
+states = 14112, Q entries = 42336, train seeds = (0, 1, 2), eval seeds = 10000..10019
+
+SARSA train seed 0
+  training: last-10% mean return -686.5, last-10% success 0.0%, final Q-entry coverage 39.8%
+  eval success_rate = 0.000
+  eval return_mean = -813.281
+  eval return_std = 288.479
+  eval reached_upright = 3
+  eval never_upright = 17
+  eval time_to_upright_mean_s = 10.057
+  eval duration_mean_s = 8.111
+  eval longest_hold_mean_s = 0.066
+  eval closest_approach_mean_deg = 87.251
+  eval outcomes = {'success': 0, 'unsafe': 19, 'fell': 0, 'time-limit': 1}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: time-limit, 11.27, 0.32, -972; 10001: unsafe, never, 0.00, -804; 10002: unsafe, never, 0.00, -465; 10003: unsafe, never, 0.00, -819; 10004: unsafe, never, 0.00, -561; 10005: unsafe, never, 0.00, -1393; 10006: unsafe, never, 0.00, -803; 10007: unsafe, never, 0.00, -609; 10008: unsafe, never, 0.00, -445; 10009: unsafe, 9.90, 0.55, -865; 10010: unsafe, never, 0.00, -811; 10011: unsafe, never, 0.00, -481; 10012: unsafe, never, 0.00, -775; 10013: unsafe, never, 0.00, -1366; 10014: unsafe, 9.00, 0.44, -709; 10015: unsafe, never, 0.00, -1153; 10016: unsafe, never, 0.00, -1163; 10017: unsafe, never, 0.00, -432; 10018: unsafe, never, 0.00, -567; 10019: unsafe, never, 0.00, -1072
+
+SARSA train seed 1
+  training: last-10% mean return -764.8, last-10% success 0.0%, final Q-entry coverage 36.5%
+  eval success_rate = 0.000
+  eval return_mean = -766.559
+  eval return_std = 447.084
+  eval reached_upright = 7
+  eval never_upright = 13
+  eval time_to_upright_mean_s = 5.963
+  eval duration_mean_s = 8.723
+  eval longest_hold_mean_s = 0.107
+  eval closest_approach_mean_deg = 60.313
+  eval outcomes = {'success': 0, 'unsafe': 18, 'fell': 0, 'time-limit': 2}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: unsafe, 6.99, 0.23, -712; 10001: unsafe, never, 0.00, -864; 10002: unsafe, never, 0.00, -768; 10003: unsafe, never, 0.00, -891; 10004: unsafe, never, 0.00, -614; 10005: unsafe, never, 0.00, -1697; 10006: unsafe, 5.66, 0.47, -430; 10007: unsafe, never, 0.00, -931; 10008: unsafe, never, 0.00, -824; 10009: unsafe, 5.34, 0.52, -330; 10010: unsafe, never, 0.00, -501; 10011: unsafe, never, 0.00, -646; 10012: time-limit, never, 0.00, -2196; 10013: unsafe, never, 0.00, -905; 10014: unsafe, 5.67, 0.28, -468; 10015: unsafe, 6.05, 0.33, -485; 10016: unsafe, 5.71, 0.07, -490; 10017: unsafe, never, 0.00, -823; 10018: unsafe, never, 0.00, -532; 10019: time-limit, 6.32, 0.23, -223
+
+SARSA train seed 2
+  training: last-10% mean return -644.4, last-10% success 0.0%, final Q-entry coverage 39.0%
+  eval success_rate = 0.000
+  eval return_mean = -672.008
+  eval return_std = 136.999
+  eval reached_upright = 5
+  eval never_upright = 15
+  eval time_to_upright_mean_s = 8.336
+  eval duration_mean_s = 7.066
+  eval longest_hold_mean_s = 0.076
+  eval closest_approach_mean_deg = 49.562
+  eval outcomes = {'success': 0, 'unsafe': 20, 'fell': 0, 'time-limit': 0}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: unsafe, 8.21, 0.36, -691; 10001: unsafe, never, 0.00, -569; 10002: unsafe, never, 0.00, -527; 10003: unsafe, 6.09, 0.29, -569; 10004: unsafe, never, 0.00, -579; 10005: unsafe, never, 0.00, -585; 10006: unsafe, never, 0.00, -705; 10007: unsafe, never, 0.00, -580; 10008: unsafe, never, 0.00, -717; 10009: unsafe, 7.32, 0.19, -601; 10010: unsafe, 8.78, 0.26, -801; 10011: unsafe, never, 0.00, -496; 10012: unsafe, never, 0.00, -616; 10013: unsafe, never, 0.00, -696; 10014: unsafe, 11.28, 0.43, -961; 10015: unsafe, never, 0.00, -677; 10016: unsafe, never, 0.00, -753; 10017: unsafe, never, 0.00, -606; 10018: unsafe, never, 0.00, -1064; 10019: unsafe, never, 0.00, -649
+
+SARSA pooled over 3 seeds x 20 eval episodes: success 0.0%, return -750.6 +- 322.6, reached upright 15/60, time to upright 7.57 s, duration 7.97 s
+
+Q-learning train seed 0
+  training: last-10% mean return -745.1, last-10% success 0.0%, final Q-entry coverage 33.7%
+  eval success_rate = 0.000
+  eval return_mean = -781.393
+  eval return_std = 208.446
+  eval reached_upright = 0
+  eval never_upright = 20
+  eval time_to_upright_mean_s = nan
+  eval duration_mean_s = 6.012
+  eval longest_hold_mean_s = 0.000
+  eval closest_approach_mean_deg = 97.303
+  eval outcomes = {'success': 0, 'unsafe': 20, 'fell': 0, 'time-limit': 0}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: unsafe, never, 0.00, -856; 10001: unsafe, never, 0.00, -1051; 10002: unsafe, never, 0.00, -858; 10003: unsafe, never, 0.00, -850; 10004: unsafe, never, 0.00, -925; 10005: unsafe, never, 0.00, -809; 10006: unsafe, never, 0.00, -1061; 10007: unsafe, never, 0.00, -755; 10008: unsafe, never, 0.00, -604; 10009: unsafe, never, 0.00, -860; 10010: unsafe, never, 0.00, -1100; 10011: unsafe, never, 0.00, -672; 10012: unsafe, never, 0.00, -643; 10013: unsafe, never, 0.00, -626; 10014: unsafe, never, 0.00, -1201; 10015: unsafe, never, 0.00, -663; 10016: unsafe, never, 0.00, -395; 10017: unsafe, never, 0.00, -579; 10018: unsafe, never, 0.00, -626; 10019: unsafe, never, 0.00, -495
+
+Q-learning train seed 1
+  training: last-10% mean return -676.3, last-10% success 0.0%, final Q-entry coverage 34.2%
+  eval success_rate = 0.000
+  eval return_mean = -697.236
+  eval return_std = 125.537
+  eval reached_upright = 1
+  eval never_upright = 19
+  eval time_to_upright_mean_s = 7.270
+  eval duration_mean_s = 6.276
+  eval longest_hold_mean_s = 0.020
+  eval closest_approach_mean_deg = 83.730
+  eval outcomes = {'success': 0, 'unsafe': 20, 'fell': 0, 'time-limit': 0}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: unsafe, never, 0.00, -611; 10001: unsafe, never, 0.00, -603; 10002: unsafe, never, 0.00, -697; 10003: unsafe, never, 0.00, -841; 10004: unsafe, never, 0.00, -818; 10005: unsafe, never, 0.00, -648; 10006: unsafe, never, 0.00, -718; 10007: unsafe, never, 0.00, -603; 10008: unsafe, never, 0.00, -740; 10009: unsafe, never, 0.00, -660; 10010: unsafe, never, 0.00, -1063; 10011: unsafe, never, 0.00, -580; 10012: unsafe, never, 0.00, -541; 10013: unsafe, never, 0.00, -795; 10014: unsafe, never, 0.00, -576; 10015: unsafe, 7.27, 0.40, -521; 10016: unsafe, never, 0.00, -735; 10017: unsafe, never, 0.00, -790; 10018: unsafe, never, 0.00, -777; 10019: unsafe, never, 0.00, -627
+
+Q-learning train seed 2
+  training: last-10% mean return -684.7, last-10% success 0.0%, final Q-entry coverage 34.2%
+  eval success_rate = 0.000
+  eval return_mean = -715.077
+  eval return_std = 156.388
+  eval reached_upright = 3
+  eval never_upright = 17
+  eval time_to_upright_mean_s = 8.140
+  eval duration_mean_s = 6.371
+  eval longest_hold_mean_s = 0.036
+  eval closest_approach_mean_deg = 88.974
+  eval outcomes = {'success': 0, 'unsafe': 20, 'fell': 0, 'time-limit': 0}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: unsafe, never, 0.00, -685; 10001: unsafe, never, 0.00, -691; 10002: unsafe, never, 0.00, -1024; 10003: unsafe, never, 0.00, -679; 10004: unsafe, never, 0.00, -520; 10005: unsafe, never, 0.00, -794; 10006: unsafe, 7.33, 0.14, -504; 10007: unsafe, 9.77, 0.36, -747; 10008: unsafe, never, 0.00, -876; 10009: unsafe, never, 0.00, -688; 10010: unsafe, 7.32, 0.22, -634; 10011: unsafe, never, 0.00, -1087; 10012: unsafe, never, 0.00, -499; 10013: unsafe, never, 0.00, -669; 10014: unsafe, never, 0.00, -782; 10015: unsafe, never, 0.00, -776; 10016: unsafe, never, 0.00, -514; 10017: unsafe, never, 0.00, -567; 10018: unsafe, never, 0.00, -763; 10019: unsafe, never, 0.00, -800
+
+Q-learning pooled over 3 seeds x 20 eval episodes: success 0.0%, return -731.2 +- 170.9, reached upright 4/60, time to upright 7.92 s, duration 6.22 s
+
+SARSA vs Q-learning target for one sampled swing-up transition (trained Q-learning table):
+  S bins (2, 2, 17, 8), A = 2, R = -0.9989, S' bins (2, 2, 17, 8)
+  Q(S',.) = [-109.441, -109.578, -108.786], exploratory A' = 1
+  SARSA target      R + g*Q(S',A')      = -109.4809
+  Q-learning target R + g*max_a Q(S',a) = -108.6973
+
+==================== swingup_comparison ====================
+task: {'name': 'swingup', 'swing_up': True, 'bins': '(see part2_discretization.txt)', 'max_steps': 2000, 'lambda_phi': 0.1, 'lambda_u': 1.0, 'success_bonus': 100.0, 'unsafe_penalty': -200.0, 'init_angle_deg': 5.0, 'init_rate': 0.05, 'decision_steps': 5, 'upright_start_fraction': 0.5, 'fine_control_deg': 25.0}
+hyperparameters: {'episodes': 6000, 'alpha': 0.1, 'gamma': 0.99, 'epsilon_start': 1.0, 'epsilon_end': 0.01, 'epsilon_decay_fraction': 0.7, 'q_init': 0.0}
+states = 14112, Q entries = 42336, train seeds = (0, 1, 2), eval seeds = 10000..10019
+
+SARSA train seed 0
+  training: last-10% mean return -431.0, last-10% success 8.2%, final Q-entry coverage 50.6%
+  training, last 10% split by start: downward-start success 0.0% (309 ep.), upright-start success 16.8% (291 ep.)
+  eval success_rate = 0.000
+  eval return_mean = -664.082
+  eval return_std = 102.844
+  eval reached_upright = 12
+  eval never_upright = 8
+  eval time_to_upright_mean_s = 8.832
+  eval duration_mean_s = 9.146
+  eval longest_hold_mean_s = 0.268
+  eval closest_approach_mean_deg = 34.027
+  eval outcomes = {'success': 0, 'unsafe': 20, 'fell': 0, 'time-limit': 0}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: unsafe, 9.03, 1.12, -822; 10001: unsafe, 14.21, 0.29, -789; 10002: unsafe, never, 0.00, -671; 10003: unsafe, 9.75, 0.33, -885; 10004: unsafe, 7.07, 0.27, -640; 10005: unsafe, never, 0.00, -617; 10006: unsafe, 7.97, 0.88, -540; 10007: unsafe, never, 0.00, -594; 10008: unsafe, 9.06, 0.19, -833; 10009: unsafe, never, 0.00, -623; 10010: unsafe, never, 0.00, -557; 10011: unsafe, 6.93, 0.11, -527; 10012: unsafe, 9.51, 0.32, -598; 10013: unsafe, never, 0.00, -608; 10014: unsafe, 5.93, 0.23, -584; 10015: unsafe, never, 0.00, -629; 10016: unsafe, never, 0.00, -636; 10017: unsafe, 9.49, 0.35, -797; 10018: unsafe, 7.77, 0.86, -717; 10019: unsafe, 9.26, 0.40, -616
+
+SARSA train seed 1
+  training: last-10% mean return -269.5, last-10% success 12.7%, final Q-entry coverage 49.5%
+  training, last 10% split by start: downward-start success 0.0% (300 ep.), upright-start success 25.3% (300 ep.)
+  eval success_rate = 0.000
+  eval return_mean = -575.849
+  eval return_std = 175.062
+  eval reached_upright = 6
+  eval never_upright = 14
+  eval time_to_upright_mean_s = 6.568
+  eval duration_mean_s = 6.970
+  eval longest_hold_mean_s = 0.138
+  eval closest_approach_mean_deg = 70.436
+  eval outcomes = {'success': 0, 'unsafe': 19, 'fell': 0, 'time-limit': 1}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: unsafe, 5.55, 0.34, -635; 10001: unsafe, never, 0.00, -691; 10002: unsafe, 7.55, 0.54, -581; 10003: unsafe, never, 0.00, -661; 10004: unsafe, never, 0.00, -1055; 10005: time-limit, 8.46, 0.69, -320; 10006: unsafe, 5.75, 0.55, -341; 10007: unsafe, never, 0.00, -557; 10008: unsafe, never, 0.00, -736; 10009: unsafe, never, 0.00, -456; 10010: unsafe, never, 0.00, -656; 10011: unsafe, never, 0.00, -454; 10012: unsafe, never, 0.00, -905; 10013: unsafe, never, 0.00, -450; 10014: unsafe, never, 0.00, -532; 10015: unsafe, never, 0.00, -451; 10016: unsafe, never, 0.00, -437; 10017: unsafe, 5.33, 0.25, -562; 10018: unsafe, never, 0.00, -450; 10019: unsafe, 6.77, 0.38, -586
+
+SARSA train seed 2
+  training: last-10% mean return -284.4, last-10% success 10.8%, final Q-entry coverage 49.7%
+  training, last 10% split by start: downward-start success 0.0% (302 ep.), upright-start success 21.8% (298 ep.)
+  eval success_rate = 0.000
+  eval return_mean = -709.793
+  eval return_std = 139.332
+  eval reached_upright = 1
+  eval never_upright = 19
+  eval time_to_upright_mean_s = 11.620
+  eval duration_mean_s = 5.314
+  eval longest_hold_mean_s = 0.010
+  eval closest_approach_mean_deg = 110.497
+  eval outcomes = {'success': 0, 'unsafe': 20, 'fell': 0, 'time-limit': 0}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: unsafe, never, 0.00, -505; 10001: unsafe, never, 0.00, -541; 10002: unsafe, never, 0.00, -622; 10003: unsafe, never, 0.00, -603; 10004: unsafe, never, 0.00, -859; 10005: unsafe, never, 0.00, -647; 10006: unsafe, 11.62, 0.20, -716; 10007: unsafe, never, 0.00, -664; 10008: unsafe, never, 0.00, -779; 10009: unsafe, never, 0.00, -1040; 10010: unsafe, never, 0.00, -816; 10011: unsafe, never, 0.00, -602; 10012: unsafe, never, 0.00, -648; 10013: unsafe, never, 0.00, -642; 10014: unsafe, never, 0.00, -700; 10015: unsafe, never, 0.00, -991; 10016: unsafe, never, 0.00, -641; 10017: unsafe, never, 0.00, -570; 10018: unsafe, never, 0.00, -763; 10019: unsafe, never, 0.00, -847
+
+SARSA pooled over 3 seeds x 20 eval episodes: success 0.0%, return -649.9 +- 152.7, reached upright 19/60, time to upright 8.26 s, duration 7.14 s
+
+Q-learning train seed 0
+  training: last-10% mean return -281.9, last-10% success 16.5%, final Q-entry coverage 48.7%
+  training, last 10% split by start: downward-start success 0.0% (315 ep.), upright-start success 34.7% (285 ep.)
+  eval success_rate = 0.000
+  eval return_mean = -929.960
+  eval return_std = 463.426
+  eval reached_upright = 1
+  eval never_upright = 19
+  eval time_to_upright_mean_s = 9.000
+  eval duration_mean_s = 6.722
+  eval longest_hold_mean_s = 0.020
+  eval closest_approach_mean_deg = 134.343
+  eval outcomes = {'success': 0, 'unsafe': 19, 'fell': 0, 'time-limit': 1}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: unsafe, never, 0.00, -737; 10001: unsafe, never, 0.00, -2060; 10002: unsafe, never, 0.00, -929; 10003: unsafe, never, 0.00, -838; 10004: unsafe, never, 0.00, -646; 10005: unsafe, 9.00, 0.40, -922; 10006: unsafe, never, 0.00, -1057; 10007: unsafe, never, 0.00, -789; 10008: unsafe, never, 0.00, -680; 10009: unsafe, never, 0.00, -675; 10010: unsafe, never, 0.00, -789; 10011: unsafe, never, 0.00, -665; 10012: unsafe, never, 0.00, -752; 10013: unsafe, never, 0.00, -731; 10014: time-limit, never, 0.00, -2482; 10015: unsafe, never, 0.00, -772; 10016: unsafe, never, 0.00, -730; 10017: unsafe, never, 0.00, -695; 10018: unsafe, never, 0.00, -734; 10019: unsafe, never, 0.00, -916
+
+Q-learning train seed 1
+  training: last-10% mean return -395.9, last-10% success 7.2%, final Q-entry coverage 49.8%
+  training, last 10% split by start: downward-start success 0.0% (289 ep.), upright-start success 13.8% (311 ep.)
+  eval success_rate = 0.000
+  eval return_mean = -1257.234
+  eval return_std = 505.637
+  eval reached_upright = 0
+  eval never_upright = 20
+  eval time_to_upright_mean_s = nan
+  eval duration_mean_s = 9.393
+  eval longest_hold_mean_s = 0.000
+  eval closest_approach_mean_deg = 129.354
+  eval outcomes = {'success': 0, 'unsafe': 18, 'fell': 0, 'time-limit': 2}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: unsafe, never, 0.00, -1037; 10001: unsafe, never, 0.00, -798; 10002: time-limit, never, 0.00, -2321; 10003: unsafe, never, 0.00, -796; 10004: unsafe, never, 0.00, -1084; 10005: unsafe, never, 0.00, -708; 10006: unsafe, never, 0.00, -1382; 10007: unsafe, never, 0.00, -1539; 10008: unsafe, never, 0.00, -723; 10009: unsafe, never, 0.00, -1314; 10010: unsafe, never, 0.00, -1455; 10011: time-limit, never, 0.00, -2328; 10012: unsafe, never, 0.00, -837; 10013: unsafe, never, 0.00, -1695; 10014: unsafe, never, 0.00, -877; 10015: unsafe, never, 0.00, -742; 10016: unsafe, never, 0.00, -761; 10017: unsafe, never, 0.00, -1559; 10018: unsafe, never, 0.00, -1229; 10019: unsafe, never, 0.00, -1959
+
+Q-learning train seed 2
+  training: last-10% mean return -210.5, last-10% success 24.3%, final Q-entry coverage 48.6%
+  training, last 10% split by start: downward-start success 0.0% (293 ep.), upright-start success 47.6% (307 ep.)
+  eval success_rate = 0.000
+  eval return_mean = -751.919
+  eval return_std = 416.268
+  eval reached_upright = 0
+  eval never_upright = 20
+  eval time_to_upright_mean_s = nan
+  eval duration_mean_s = 5.386
+  eval longest_hold_mean_s = 0.000
+  eval closest_approach_mean_deg = 131.880
+  eval outcomes = {'success': 0, 'unsafe': 20, 'fell': 0, 'time-limit': 0}
+  eval per episode (seed: outcome, first upright s, longest hold s, return):
+    10000: unsafe, never, 0.00, -664; 10001: unsafe, never, 0.00, -859; 10002: unsafe, never, 0.00, -1415; 10003: unsafe, never, 0.00, -595; 10004: unsafe, never, 0.00, -827; 10005: unsafe, never, 0.00, -351; 10006: unsafe, never, 0.00, -843; 10007: unsafe, never, 0.00, -610; 10008: unsafe, never, 0.00, -1213; 10009: unsafe, never, 0.00, -338; 10010: unsafe, never, 0.00, -337; 10011: unsafe, never, 0.00, -1967; 10012: unsafe, never, 0.00, -336; 10013: unsafe, never, 0.00, -801; 10014: unsafe, never, 0.00, -706; 10015: unsafe, never, 0.00, -344; 10016: unsafe, never, 0.00, -339; 10017: unsafe, never, 0.00, -823; 10018: unsafe, never, 0.00, -503; 10019: unsafe, never, 0.00, -1167
+
+Q-learning pooled over 3 seeds x 20 eval episodes: success 0.0%, return -979.7 +- 508.3, reached upright 1/60, time to upright 9.00 s, duration 7.17 s
