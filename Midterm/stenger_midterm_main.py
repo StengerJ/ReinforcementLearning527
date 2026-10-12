@@ -156,7 +156,7 @@ def draw_hud(screen, font, big, run, paused, speed):
         screen.blit(font.render("R: replay next eval seed    ESC: quit", True, DIM), (40, 62))
     elif paused:
         screen.blit(big.render("PAUSED", True, WARN), (40, 24))
-    screen.blit(font.render(f"SPACE pause   +/- speed (x{speed:g})   R restart   ESC quit", True, DIM),
+    screen.blit(font.render(f"SPACE pause   +/- speed (x{speed:g})   R restart   M menu   ESC quit", True, DIM),
                 (40, H - 30))
 
 
@@ -174,7 +174,70 @@ def report(run):
           f"longest hold={log.max_hold * TS:.2f} s, decisions={run.decisions}")
 
 
-def run_window(run, speed, screenshot=None):
+MODE_INFO = {
+    "balance": ["Stage 1: balancing only (no swing-up).",
+                "Supplied FurutaEnv() with all defaults: starts near upright,",
+                "built-in reward, episode ends if |theta| > 20 deg.",
+                "Result: 60/60 evaluation episodes held 5 s."],
+    "swingup": ["Stage 2: swing-up and balance.",
+                "FurutaEnv(angle_limit=inf), starts hanging down (pi +- 5 deg),",
+                "reward cos(theta~) - 0.1 phi^2 - u^2, success = 5 s upright.",
+                "Result: learns to pump energy and reach the top, no catch yet."],
+}
+
+
+class Button:
+    def __init__(self, rect, label, value=None):
+        self.rect, self.label, self.value = rect, label, value
+
+    def draw(self, screen, font, selected=False, hover=False):
+        import pygame
+        fill = (52, 98, 170) if selected else ((48, 54, 68) if hover else (34, 39, 50))
+        pygame.draw.rect(screen, fill, self.rect, border_radius=10)
+        pygame.draw.rect(screen, ARM if selected else GRID, self.rect, 2, border_radius=10)
+        img = font.render(self.label, True, TEXT)
+        screen.blit(img, img.get_rect(center=self.rect.center))
+
+    def hit(self, pos):
+        return self.rect.collidepoint(pos)
+
+
+def menu_buttons():
+    import pygame
+    stage = [Button(pygame.Rect(220, 200, 300, 70), "Balancing", "balance"),
+             Button(pygame.Rect(580, 200, 300, 70), "Swing-up", "swingup")]
+    method = [Button(pygame.Rect(220, 330, 300, 56), "SARSA", "sarsa"),
+              Button(pygame.Rect(580, 330, 300, 56), "Q-learning", "qlearning")]
+    start = Button(pygame.Rect(400, 560, 300, 70), "Start episode")
+    return stage, method, start
+
+
+def draw_menu(screen, font, big, choice, buttons):
+    import pygame
+    stage_btns, method_btns, start = buttons
+    mouse = pygame.mouse.get_pos()
+    screen.fill(BG)
+    title = big.render("Furuta pendulum - learned policy demo", True, TEXT)
+    screen.blit(title, title.get_rect(center=(W // 2, 70)))
+    sub = font.render("Choose what to watch, then start the episode", True, DIM)
+    screen.blit(sub, sub.get_rect(center=(W // 2, 110)))
+    screen.blit(font.render("Task  (1 / 2)", True, DIM), (220, 172))
+    for b in stage_btns:
+        b.draw(screen, big, b.value == choice["stage"], b.hit(mouse))
+    screen.blit(font.render("Method  (S / Q)", True, DIM), (220, 302))
+    for b in method_btns:
+        b.draw(screen, big, b.value == choice["method"], b.hit(mouse))
+    for i, line in enumerate(MODE_INFO[choice["stage"]]):
+        screen.blit(font.render(line, True, TEXT if i == 0 else DIM), (220, 420 + i * 26))
+    seed = DEFAULT_SEED[choice["stage"]]
+    screen.blit(font.render(f"Q table: results/{STAGES[choice['stage']]}_{choice['method']}_seed{seed}.npz   "
+                            f"eval seed {choice['eval_seed']}", True, DIM), (220, 528))
+    start.draw(screen, big, False, start.hit(mouse))
+    hint = font.render("ENTER start    ESC quit", True, DIM)
+    screen.blit(hint, hint.get_rect(center=(W // 2, H - 24)))
+
+
+def run_window(choice, speed, screenshot=None, start_now=False):
     import pygame
     pygame.init()
     screen = pygame.display.set_mode((W, H))
@@ -182,12 +245,50 @@ def run_window(run, speed, screenshot=None):
     font = pygame.font.SysFont("consolas", 17)
     big = pygame.font.SysFont("consolas", 28, bold=True)
     clock = pygame.time.Clock()
-    paused, reported, carry = False, False, 0.0
+    buttons = menu_buttons()
+    menu_btn = Button(pygame.Rect(W - 150, H - 46, 130, 36), "Menu (M)")
+    run, paused, reported, carry = None, False, False, 0.0
+
+    def start():
+        nonlocal run, paused, reported, carry
+        seed = choice["seed"] if choice["seed"] is not None else DEFAULT_SEED[choice["stage"]]
+        run = Runner(choice["stage"], choice["method"], seed, choice["eval_seed"])
+        paused, reported, carry = False, False, 0.0
+
+    if start_now:
+        start()
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 pygame.quit()
                 return
+            if run is None:
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    for b in buttons[0]:
+                        if b.hit(event.pos):
+                            choice["stage"] = b.value
+                    for b in buttons[1]:
+                        if b.hit(event.pos):
+                            choice["method"] = b.value
+                    if buttons[2].hit(event.pos):
+                        start()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_1:
+                        choice["stage"] = "balance"
+                    elif event.key == pygame.K_2:
+                        choice["stage"] = "swingup"
+                    elif event.key == pygame.K_s:
+                        choice["method"] = "sarsa"
+                    elif event.key == pygame.K_q:
+                        choice["method"] = "qlearning"
+                    elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        start()
+                continue
+            if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and menu_btn.hit(event.pos)) or \
+                    (event.type == pygame.KEYDOWN and event.key == pygame.K_m):
+                choice["eval_seed"] = run.eval_seed
+                run = None
+                break
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     paused = not paused
@@ -199,6 +300,14 @@ def run_window(run, speed, screenshot=None):
                 elif event.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
                     speed = max(speed / 2, 0.125)
         dt = clock.tick(60) / 1000.0
+        if run is None:
+            draw_menu(screen, font, big, choice, buttons)
+            pygame.display.flip()
+            if screenshot:
+                pygame.image.save(screen, screenshot)
+                pygame.quit()
+                return
+            continue
         if not paused and not run.done:
             carry += dt * speed / TS
             for _ in range(int(carry)):
@@ -213,6 +322,7 @@ def run_window(run, speed, screenshot=None):
         draw_pendulum(screen, run.ep.state, 320, 380, 170)
         draw_trace(screen, font, run.ep.log.theta, (690, 470, 380, 170))
         draw_hud(screen, font, big, run, paused, speed)
+        menu_btn.draw(screen, font, False, menu_btn.hit(pygame.mouse.get_pos()))
         pygame.display.flip()
         if screenshot and run.done:
             pygame.image.save(screen, screenshot)
@@ -222,20 +332,22 @@ def run_window(run, speed, screenshot=None):
 
 def main():
     parser = argparse.ArgumentParser(description="Run and visualize one greedy episode with a learned Q table.")
-    parser.add_argument("--stage", choices=list(STAGES), default="balance")
-    parser.add_argument("--method", choices=["sarsa", "qlearning"], default="qlearning")
+    parser.add_argument("--stage", choices=list(STAGES), default="balance", help="preselected task")
+    parser.add_argument("--method", choices=["sarsa", "qlearning"], default="qlearning", help="preselected method")
     parser.add_argument("--seed", type=int, default=None, help="training seed of the saved Q table (0, 1, 2)")
     parser.add_argument("--eval-seed", type=int, default=10000)
     parser.add_argument("--speed", type=float, default=1.0, help="playback speed, 1 = real time")
+    parser.add_argument("--skip-menu", action="store_true", help="start the preselected episode immediately")
     parser.add_argument("--no-render", action="store_true", help="run the episode without a window")
-    parser.add_argument("--screenshot", default=None, help="save the final frame to this PNG and exit")
+    parser.add_argument("--screenshot", default=None, help="save a frame to this PNG and exit "
+                                                          "(menu, or final frame with --skip-menu)")
     args = parser.parse_args()
-    seed = DEFAULT_SEED[args.stage] if args.seed is None else args.seed
-    run = Runner(args.stage, args.method, seed, args.eval_seed)
+    choice = {"stage": args.stage, "method": args.method, "seed": args.seed, "eval_seed": args.eval_seed}
     if args.no_render:
-        run_headless(run)
+        seed = DEFAULT_SEED[args.stage] if args.seed is None else args.seed
+        run_headless(Runner(args.stage, args.method, seed, args.eval_seed))
     else:
-        run_window(run, args.speed if not args.screenshot else 16.0, args.screenshot)
+        run_window(choice, 16.0 if args.screenshot else args.speed, args.screenshot, args.skip_menu)
 
 
 if __name__ == "__main__":
