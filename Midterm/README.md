@@ -26,6 +26,7 @@ python -m pip install -r requirements.txt
 
 | Command | Project part | Output |
 |---|---|---|
+| `python stenger_midterm_main.py` | demo: one greedy episode with a saved Q table, animated in pygame (`--stage balance\|swingup\|comparison`, `--method sarsa\|qlearning`, `--seed`, `--eval-seed`, `--speed`, `--no-render`); keys SPACE pause, +/- speed, R replay, ESC quit | window + one-line summary |
 | `python stenger_midterm_test_environment.py` | 1. verify the environment | `results/part1_environment.txt` |
 | `python stenger_midterm_discretization.py` | 2. bins, table size, boundary tests | `results/part2_discretization.txt` |
 | `python stenger_midterm_verification.py` | automated checks of env use, bins, policy, SARSA/Q targets, reward, success counter | console PASS/FAIL |
