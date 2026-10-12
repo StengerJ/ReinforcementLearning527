@@ -22,6 +22,14 @@ def wrap_to_pi(angle):
     return (angle + np.pi) % (2.0 * np.pi) - np.pi
 
 
+SMALL_SWING_PERIOD = 0.91
+OMEGA = 2.0 * np.pi / SMALL_SWING_PERIOD
+
+
+def pendulum_energy(state):
+    return 0.5 * (state[3] / OMEGA) ** 2 - (1.0 - np.cos(wrap_to_pi(state[2])))
+
+
 class Discretizer:
     def __init__(self, bins):
         self.bins = tuple(np.asarray(edges, dtype=float) for edges in bins)
@@ -67,6 +75,7 @@ class Task:
     max_steps: int = 2000
     lambda_phi: float = 0.1
     lambda_u: float = 1.0
+    lambda_phidot: float = 0.0
     success_bonus: float = 100.0
     unsafe_penalty: float = -200.0
     init_angle_deg: float = 5.0
@@ -74,14 +83,27 @@ class Task:
     decision_steps: int = 1
     upright_start_fraction: float = 0.0
     fine_control_deg: float = 0.0
+    handoff: tuple = None
+    start_box: tuple = None
+    start_box_fraction: float = 0.0
+    reward_kind: str = "baseline"
 
     def make_env(self, seed):
         if self.swing_up:
             return FurutaEnv(seed=seed, max_steps=self.max_steps, dt=TS, angle_limit=np.inf)
         return FurutaEnv(seed=seed, max_steps=self.max_steps, dt=TS)
 
+    def in_handoff(self, state):
+        if self.handoff is None:
+            return False
+        arm_ok = len(self.handoff) < 3 or abs(state[1]) <= self.handoff[2]
+        return abs(wrap_to_pi(state[2])) <= np.deg2rad(self.handoff[0]) and abs(state[3]) <= self.handoff[1] and arm_ok
+
     def reset(self, env, rng, training=False):
         if not self.swing_up:
+            if training and self.start_box and rng.random() < self.start_box_fraction:
+                phi, phi_dot, theta_deg, theta_dot = (rng.uniform(-w, w) for w in self.start_box)
+                return env.reset(initial_state=[phi, phi_dot, np.deg2rad(theta_deg), theta_dot])[0]
             return env.reset(seed=int(rng.integers(2**31)))[0]
         if training and rng.random() < self.upright_start_fraction:
             return env.reset(seed=int(rng.integers(2**31)))[0]
@@ -94,7 +116,12 @@ class Task:
             return env_reward
         if unsafe:
             return self.unsafe_penalty
-        r = np.cos(wrap_to_pi(next_state[2])) - self.lambda_phi * next_state[0] ** 2 - self.lambda_u * torque**2
+        if self.reward_kind == "energy":
+            shape = -abs(pendulum_energy(next_state))
+        else:
+            shape = np.cos(wrap_to_pi(next_state[2]))
+        r = (shape - self.lambda_phi * next_state[0] ** 2 - self.lambda_phidot * next_state[1] ** 2
+             - self.lambda_u * torque**2)
         return r + self.success_bonus if success else r
 
     def hold_steps(self, state):
@@ -107,7 +134,10 @@ class Task:
 
 
 BALANCE = Task("balance", swing_up=False, bins=BALANCE_BINS)
+BALANCE_AGENT = Task("balance_agent", swing_up=False, bins=BALANCE_BINS, start_box=(0.5, 4.0, 12.0, 2.0),
+                     start_box_fraction=0.5)
 SWINGUP = Task("swingup", swing_up=True, bins=SWINGUP_BINS, decision_steps=5, fine_control_deg=25.0)
+SWINGUP_AGENT = replace(SWINGUP, name="swingup_agent", handoff=(15.0, 1.5), reward_kind="energy")
 
 
 @dataclass(frozen=True)
@@ -192,7 +222,10 @@ class Episode:
             log.first_upright_step = log.steps
         log.max_hold = max(log.max_hold, self.hold)
         log.closest_deg = min(log.closest_deg, abs(np.rad2deg(theta)))
-        success = self.hold >= HOLD_STEPS and self.task.ends_on_success()
+        if self.task.handoff is not None:
+            success = self.task.in_handoff(next_state)
+        else:
+            success = self.hold >= HOLD_STEPS and self.task.ends_on_success()
         reward = self.task.reward(env_reward, next_state, info["torque"], success, terminated)
         log.ret += reward
         if self.record:
@@ -256,7 +289,7 @@ def train(method, task, hyper, seed, progress=None):
         log = run_episode(q, task, disc, env, rng, hyper, hyper.epsilon(ep), visits)
         hist["returns"][ep] = log.ret
         hist["durations"][ep] = log.steps * TS
-        hist["success"][ep] = float(log.max_hold >= HOLD_STEPS)
+        hist["success"][ep] = float(log.outcome == "success" or log.max_hold >= HOLD_STEPS)
         hist["max_hold"][ep] = log.max_hold * TS
         hist["closest_deg"][ep] = log.closest_deg
         hist["downward_start"][ep] = float(log.downward_start)
@@ -284,5 +317,51 @@ def evaluate(q, task, eval_seeds):
         while not done:
             a = epsilon_greedy(frozen[disc.index(ep.state)], 0.0, rng)
             _, _, _, done = ep.step(a)
+        episodes.append(ep.log)
+    return episodes
+
+
+class TwoAgentController:
+    def __init__(self, q_swing, q_balance, swing_task, balance_task):
+        self.q_swing, self.q_balance = q_swing, q_balance
+        self.swing_task, self.balance_task = swing_task, balance_task
+        self.d_swing, self.d_balance = Discretizer(swing_task.bins), Discretizer(balance_task.bins)
+        self.mode = "swing-up"
+        self.handoffs = 0
+
+    def choose(self, state, rng):
+        if self.mode == "balance" and abs(wrap_to_pi(state[2])) > UPRIGHT_RAD:
+            self.mode = "swing-up"
+        elif self.mode == "swing-up" and self.swing_task.in_handoff(state):
+            self.mode = "balance"
+            self.handoffs += 1
+        if self.mode == "balance":
+            return epsilon_greedy(self.q_balance[self.d_balance.index(state)], 0.0, rng), 1
+        a = epsilon_greedy(self.q_swing[self.d_swing.index(state)], 0.0, rng)
+        return a, self.swing_task.hold_steps(state)
+
+    def choose_balance(self, state, rng):
+        return epsilon_greedy(self.q_balance[self.d_balance.index(state)], 0.0, rng)
+
+    def should_switch(self, state):
+        return self.mode == "swing-up" and self.swing_task.in_handoff(state)
+
+
+def evaluate_combined(q_swing, q_balance, swing_task, balance_task, eval_seeds):
+    task = replace(swing_task, handoff=None, upright_start_fraction=0.0)
+    episodes = []
+    for seed in eval_seeds:
+        rng = np.random.default_rng(seed)
+        env = task.make_env(seed)
+        ep = Episode(task, env, rng, record=True)
+        ctrl = TwoAgentController(q_swing, q_balance, swing_task, balance_task)
+        done = False
+        while not done:
+            a, n = ctrl.choose(ep.state, rng)
+            for _ in range(n):
+                _, _, _, done = ep.sim_step(a)
+                if done or ctrl.should_switch(ep.state):
+                    break
+        ep.log.handoffs = ctrl.handoffs
         episodes.append(ep.log)
     return episodes

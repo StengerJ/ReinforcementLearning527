@@ -4,12 +4,13 @@ import sys
 
 import numpy as np
 
-from stenger_midterm_agent import (
-    HERE, HOLD_STEPS, TS, UPRIGHT_RAD, Discretizer, Episode, epsilon_greedy, wrap_to_pi)
-from stenger_midterm_experiment import experiment
+from dataclasses import replace
 
-STAGES = {"balance": "balance", "swingup": "swingup", "comparison": "swingup_comparison"}
-DEFAULT_SEED = {"balance": 1, "swingup": 1, "comparison": 0}
+from stenger_midterm_agent import (
+    BALANCE_AGENT, HERE, HOLD_STEPS, SWINGUP_AGENT, TS, UPRIGHT_RAD, Episode, TwoAgentController, wrap_to_pi)
+
+STAGES = {"balance": "balance_agent", "swingup": "swingup_agent + balance_agent"}
+DEFAULT_SEED = {"balance": 1, "swingup": 1}
 ACTION_TORQUE = {0: -0.02, 1: 0.0, 2: 0.02}
 
 W, H = 1100, 680
@@ -25,17 +26,25 @@ BAD = (235, 80, 80)
 WARN = (240, 200, 70)
 
 
+def load_q(name, method, seed):
+    path = HERE / "results" / f"{name}_{method}_seed{seed}.npz"
+    if not path.exists():
+        sys.exit(f"missing {path}; run stenger_midterm_experiment.py first")
+    q = np.load(path)["q"].copy()
+    q.setflags(write=False)
+    return q
+
+
 class Runner:
     def __init__(self, stage, method, seed, eval_seed):
-        self.name = STAGES[stage]
-        self.task, _ = experiment(self.name)
-        path = HERE / "results" / f"{self.name}_{method}_seed{seed}.npz"
-        if not path.exists():
-            sys.exit(f"missing {path}; run stenger_midterm_experiment.py first")
-        q = np.load(path)["q"].copy()
-        q.setflags(write=False)
-        self.q, self.method, self.seed = q, method, seed
-        self.disc = Discretizer(self.task.bins)
+        self.stage, self.name = stage, STAGES[stage]
+        self.method, self.seed = method, seed
+        self.q_balance = load_q("balance_agent", method, seed)
+        self.q_swing = load_q("swingup_agent", method, seed) if stage == "swingup" else None
+        if stage == "swingup":
+            self.task = replace(SWINGUP_AGENT, handoff=None)
+        else:
+            self.task = replace(BALANCE_AGENT, swing_up=False)
         self.reset(eval_seed)
 
     def reset(self, eval_seed):
@@ -43,15 +52,24 @@ class Runner:
         self.rng = np.random.default_rng(eval_seed)
         self.env = self.task.make_env(eval_seed)
         self.ep = Episode(self.task, self.env, self.rng, record=True)
+        self.ctrl = TwoAgentController(self.q_swing, self.q_balance, SWINGUP_AGENT, BALANCE_AGENT)
+        if self.stage == "balance":
+            self.ctrl.mode = "balance"
         self.action, self.remaining, self.decisions = 1, 0, 0
         self.done = False
+
+    @property
+    def agent(self):
+        return "balancing agent" if self.ctrl.mode == "balance" else "swing-up agent"
 
     def tick(self):
         if self.done:
             return
-        if self.remaining == 0:
-            self.action = epsilon_greedy(self.q[self.disc.index(self.ep.state)], 0.0, self.rng)
-            self.remaining = self.task.hold_steps(self.ep.state)
+        if self.remaining == 0 or self.ctrl.should_switch(self.ep.state):
+            if self.stage == "balance":
+                self.action, self.remaining = self.ctrl.choose_balance(self.ep.state, self.rng), 1
+            else:
+                self.action, self.remaining = self.ctrl.choose(self.ep.state, self.rng)
             self.decisions += 1
         _, _, _, self.done = self.ep.sim_step(self.action)
         self.remaining -= 1
@@ -125,16 +143,17 @@ def draw_hud(screen, font, big, run, paused, speed):
     s = ep.state
     th = math.degrees(wrap_to_pi(s[2]))
     lines = [
-        (f"Stage: {run.name}   method: {run.method}", TEXT),
-        (f"Q table: train seed {run.seed}   eval seed: {run.eval_seed}   greedy", DIM),
-        ("", TEXT),
+        (f"Stage: {run.stage}   method: {run.method}", TEXT),
+        (f"Q tables: train seed {run.seed}   eval seed: {run.eval_seed}   greedy", DIM),
+        (f"in control: {run.agent}   (handoffs {run.ctrl.handoffs})",
+         GOOD if run.ctrl.mode == "balance" else WARN),
         (f"time      {ep.log.steps * TS:6.2f} s   (step {ep.log.steps}/{task.max_steps})", TEXT),
         (f"theta~    {th:+7.1f} deg", GOOD if abs(th) <= 20 else TEXT),
         (f"theta_dot {s[3]:+7.2f} rad/s", TEXT),
         (f"phi       {s[0]:+7.2f} rad   (limit +-3.14)", BAD if abs(s[0]) > 2.5 else TEXT),
         (f"phi_dot   {s[1]:+7.2f} rad/s", TEXT),
         (f"action    {run.action}  torque {ACTION_TORQUE[run.action]:+.2f} N m", TEXT),
-        (f"control   every {task.hold_steps(s) * 10} ms", DIM),
+        (f"control   every {(1 if run.ctrl.mode == 'balance' else SWINGUP_AGENT.hold_steps(s)) * 10} ms", DIM),
         (f"return    {ep.log.ret:9.1f}", TEXT),
     ]
     for i, (txt, col) in enumerate(lines):
@@ -169,20 +188,20 @@ def run_headless(run):
 def report(run):
     log = run.ep.log
     first = "never" if log.first_upright_step < 0 else f"{log.first_upright_step * TS:.2f} s"
-    print(f"{run.name} / {run.method} (train seed {run.seed}) / eval seed {run.eval_seed}: outcome={log.outcome}, "
+    print(f"{run.stage} / {run.method} (train seed {run.seed}) / eval seed {run.eval_seed}: outcome={log.outcome}, "
           f"duration={log.steps * TS:.2f} s, return={log.ret:.1f}, first upright={first}, "
-          f"longest hold={log.max_hold * TS:.2f} s, decisions={run.decisions}")
+          f"longest hold={log.max_hold * TS:.2f} s, handoffs={run.ctrl.handoffs}, decisions={run.decisions}")
 
 
 MODE_INFO = {
-    "balance": ["Stage 1: balancing only (no swing-up).",
+    "balance": ["Balancing agent only (no swing-up).",
                 "Supplied FurutaEnv() with all defaults: starts near upright,",
                 "built-in reward, episode ends if |theta| > 20 deg.",
-                "Result: 60/60 evaluation episodes held 5 s."],
-    "swingup": ["Stage 2: swing-up and balance.",
-                "FurutaEnv(angle_limit=inf), starts hanging down (pi +- 5 deg),",
-                "reward cos(theta~) - 0.1 phi^2 - u^2, success = 5 s upright.",
-                "Result: learns to pump energy and reach the top, no catch yet."],
+                "Trained from env.reset() and wide near-upright starts (catching)."],
+    "swingup": ["Two agents: swing-up agent, then balancing agent.",
+                "FurutaEnv(angle_limit=inf), starts hanging down (pi +- 5 deg).",
+                "Swing-up agent (energy reward) pumps until |theta~|<=15, |theta_dot|<=1.5,",
+                "then the balancing agent takes over; back to swing-up if it falls."],
 }
 
 
@@ -229,8 +248,8 @@ def draw_menu(screen, font, big, choice, buttons):
         b.draw(screen, big, b.value == choice["method"], b.hit(mouse))
     for i, line in enumerate(MODE_INFO[choice["stage"]]):
         screen.blit(font.render(line, True, TEXT if i == 0 else DIM), (220, 420 + i * 26))
-    seed = DEFAULT_SEED[choice["stage"]]
-    screen.blit(font.render(f"Q table: results/{STAGES[choice['stage']]}_{choice['method']}_seed{seed}.npz   "
+    seed = choice["seed"] if choice["seed"] is not None else DEFAULT_SEED[choice["stage"]]
+    screen.blit(font.render(f"agents: {STAGES[choice['stage']]} ({choice['method']}, train seed {seed})   "
                             f"eval seed {choice['eval_seed']}", True, DIM), (220, 528))
     start.draw(screen, big, False, start.hit(mouse))
     hint = font.render("ENTER start    ESC quit", True, DIM)

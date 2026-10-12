@@ -133,7 +133,28 @@ def test_training_and_evaluation():
           q.shape == (Discretizer(BALANCE.bins).n_states, N_ACTIONS))
 
 
+def test_two_agent_controller():
+    from stenger_midterm_agent import BALANCE_AGENT, SWINGUP_AGENT, TwoAgentController
+    q_swing = np.zeros((Discretizer(SWINGUP_AGENT.bins).n_states, N_ACTIONS))
+    q_bal = np.zeros((Discretizer(BALANCE_AGENT.bins).n_states, N_ACTIONS))
+    ctrl = TwoAgentController(q_swing, q_bal, SWINGUP_AGENT, BALANCE_AGENT)
+    rng = np.random.default_rng(0)
+    _, n = ctrl.choose([0, 0, np.pi, 0], rng)
+    check("hanging down: swing-up agent acts with a 50 ms hold", ctrl.mode == "swing-up" and n == 5)
+    _, n = ctrl.choose([0, 0, np.deg2rad(10), 1.0], rng)
+    check("inside the handoff region: balancing agent takes over at 10 ms", ctrl.mode == "balance" and n == 1
+          and ctrl.handoffs == 1)
+    ctrl.choose([0, 0, np.deg2rad(30), 0], rng)
+    check("leaving the upright region hands control back to the swing-up agent", ctrl.mode == "swing-up")
+    check("fast arrival (|theta_dot| > 1.5) is not handed off",
+          not SWINGUP_AGENT.in_handoff([0, 0, np.deg2rad(5), 3.0]))
+    check("energy reward is 0 at upright rest and -2 hanging at rest",
+          np.isclose(SWINGUP_AGENT.reward(0, [0, 0, 0, 0], 0, False, False), 0.0)
+          and np.isclose(SWINGUP_AGENT.reward(0, [0, 0, np.pi, 0], 0, False, False), -2.0))
+
+
 if __name__ == "__main__":
+    test_two_agent_controller()
     test_environment()
     test_discretizer()
     test_epsilon_greedy()

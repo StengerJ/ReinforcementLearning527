@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from stenger_midterm_agent import (
-    BALANCE, HERE, HOLD_STEPS, SWINGUP, TS, Discretizer, Hyper, evaluate, qlearning_target, sarsa_target,
-    train, wrap_to_pi)
+    BALANCE, BALANCE_AGENT, HERE, HOLD_STEPS, SWINGUP, SWINGUP_AGENT, TS, Discretizer, Hyper, evaluate,
+    evaluate_combined, qlearning_target, sarsa_target, train, wrap_to_pi)
 
 RESULTS = HERE / "results"
 FIGURES = HERE / "report" / "figures"
@@ -26,7 +26,10 @@ MA_WINDOW = 100
 EXPERIMENTS = {
     "balance": (BALANCE, Hyper(episodes=2000, q_init=100.0)),
     "swingup": (SWINGUP, Hyper(episodes=6000, q_init=0.0)),
+    "balance_agent": (BALANCE_AGENT, Hyper(episodes=4000, q_init=100.0)),
+    "swingup_agent": (SWINGUP_AGENT, Hyper(episodes=4000, q_init=0.0)),
 }
+ALL_NAMES = ["balance", "swingup", "swingup_comparison", "balance_agent", "swingup_agent"]
 COMPARISON = ("swingup_comparison", "swingup", {"upright_start_fraction": 0.5})
 
 LABEL = {"sarsa": "SARSA", "qlearning": "Q-learning"}
@@ -235,7 +238,53 @@ def summarize(names):
             target_example(name, task, hyper)
     if "swingup" in all_evals and COMPARISON[0] in all_evals:
         plot_comparison(all_evals["swingup"], all_evals[COMPARISON[0]])
+    if "balance_agent" in names and "swingup_agent" in names:
+        summarize_two_agent()
     return all_evals
+
+
+def summarize_two_agent():
+    out = print
+    out("\n==================== two-agent controller (swingup_agent -> balance_agent) ====================")
+    out(f"swing-up agent acts until |theta~| <= {SWINGUP_AGENT.handoff[0]} deg and |theta_dot| <= "
+        f"{SWINGUP_AGENT.handoff[1]} rad/s, then the balance agent acts every 10 ms; if |theta~| > 20 deg the "
+        f"swing-up agent takes over again. Same method and training seed for both agents.")
+    combined = {}
+    for method in METHODS:
+        for seed in TRAIN_SEEDS:
+            q_swing = load("swingup_agent", method, seed)["q"]
+            q_bal = load("balance_agent", method, seed)["q"]
+            logs = evaluate_combined(q_swing, q_bal, SWINGUP_AGENT, BALANCE_AGENT, EVAL_SEEDS)
+            combined[(method, seed)] = logs
+            st = eval_stats(logs)
+            out(f"\n{LABEL[method]} train seed {seed}: success {sum(e.max_hold >= HOLD_STEPS for e in logs)}/"
+                f"{len(logs)}, handoffs {sum(e.handoffs for e in logs)}, reached upright {st['reached_upright']}/"
+                f"{len(logs)}, longest hold {max(e.max_hold for e in logs) * TS:.2f} s, "
+                f"return {st['return_mean']:.1f} +- {st['return_std']:.1f}, outcomes {st['outcomes']}")
+            out("  per episode (seed: outcome, first upright s, longest hold s, handoffs): " + "; ".join(
+                f"{es}: {e.outcome}, {'never' if e.first_upright_step < 0 else f'{e.first_upright_step * TS:.2f}'}, "
+                f"{e.max_hold * TS:.2f}, {e.handoffs}" for es, e in zip(EVAL_SEEDS, logs)))
+        pooled = [e for s in TRAIN_SEEDS for e in combined[(method, s)]]
+        st = eval_stats(pooled)
+        out(f"\n{LABEL[method]} two-agent pooled: success {100 * st['success_rate']:.1f}%, reached upright "
+            f"{st['reached_upright']}/{len(pooled)}, handoffs {sum(e.handoffs for e in pooled)}, "
+            f"time to upright {st['time_to_upright_mean_s']:.2f} s")
+    fig, axes = plt.subplots(1, 2, figsize=(9.0, 3.4), sharey=True)
+    for ax, method in zip(axes, METHODS):
+        logs = sorted((e for s in TRAIN_SEEDS for e in combined[(method, s)]), key=lambda e: -e.max_hold)[:4]
+        for e in logs:
+            th = np.rad2deg(np.asarray(e.theta))
+            th[1:][np.abs(np.diff(th)) > 180] = np.nan
+            ax.plot(np.arange(len(th)) * TS, th, lw=0.9, label=f"{e.outcome}, hold {e.max_hold * TS:.2f} s")
+        for y in (-20, 20):
+            ax.axhline(y, color="gray", ls="--", lw=0.8)
+        ax.set(title=f"{LABEL[method]}: two-agent controller (4 longest holds)", xlabel="Time (s)")
+        ax.legend(fontsize=6.5, loc="lower right")
+        ax.grid(alpha=0.3)
+    axes[0].set_ylabel(r"wrapped $\tilde\theta$ (deg)")
+    fig.tight_layout()
+    fig.savefig(FIGURES / "two_agent_eval_theta.png", dpi=150)
+    plt.close(fig)
 
 
 def plot_comparison(base, comp):
@@ -275,7 +324,7 @@ def main():
     parser.add_argument("--workers", type=int, default=12)
     parser.add_argument("--episodes", type=int, default=None, help="override episode count (smoke tests)")
     args = parser.parse_args()
-    names = args.only or ["balance", "swingup", COMPARISON[0]]
+    names = args.only or ALL_NAMES
     RESULTS.mkdir(exist_ok=True)
     FIGURES.mkdir(parents=True, exist_ok=True)
     if not args.summarize_only:
@@ -291,7 +340,8 @@ def main():
             summarize(names)
         text = buffer.getvalue()
     print(text, end="")
-    (RESULTS / "summary.txt").write_text(text, encoding="utf-8")
+    out_name = "summary.txt" if names == ALL_NAMES else f"summary_{'_'.join(names)}.txt"
+    (RESULTS / out_name).write_text(text, encoding="utf-8")
 
 
 if __name__ == "__main__":
