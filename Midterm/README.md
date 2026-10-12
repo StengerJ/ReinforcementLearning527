@@ -49,3 +49,15 @@ The full experiment trains 18 runs in parallel (`--workers`, default 12; the rep
 - `slides/slides.tex` — 10-minute Beamer presentation.
 
 Build either PDF with `pdflatex` (run twice) from its folder, or upload the folder to Overleaf.
+
+## Two-agent controller (work in progress)
+
+`stenger_midterm_main.py` runs two learned agents: a **balancing agent** (`balance_agent`, also trained from
+wide near-upright starts so it can catch) and a **swing-up agent** (`swingup_agent`, energy-based reward; its
+episode succeeds on reaching |theta~| <= 15 deg and |theta_dot| <= 1.5 rad/s). The swing-up agent acts until
+that handoff region, then the balancing agent takes over. The balancing-agent tables are in `results/`; the
+swing-up-agent tables are not trained yet, so the demo's Swing-up mode needs:
+
+```bash
+python stenger_midterm_experiment.py --only balance_agent swingup_agent --workers 6
+```
