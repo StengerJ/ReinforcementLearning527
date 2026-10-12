@@ -1,4 +1,5 @@
-import json
+import contextlib
+import io
 import sys
 import time
 from pathlib import Path
@@ -114,8 +115,12 @@ def main():
     FIGURES.mkdir(parents=True, exist_ok=True)
     dt, w = CONFIG["dt"], CONFIG["moving_average_window"]
     success_steps = int(round(CONFIG["success_seconds"] / dt))
-    summary = {"config": CONFIG, "shape": SHAPE, "n_states": N_STATES, "seeds": []}
     runs = {}
+
+    print("Configuration")
+    for key, value in CONFIG.items():
+        print(f"  {key} = {value}")
+    print(f"  bins per variable = {SHAPE}, states = {N_STATES}, Q entries = {N_STATES * N_ACTIONS}")
 
     for seed in CONFIG["seeds"]:
         t0 = time.time()
@@ -154,10 +159,10 @@ def main():
             "visits_by_theta_bin": visits.sum(axis=(0, 1, 3)).tolist(),
             "visits_by_thetadot_bin": visits.sum(axis=(0, 1, 2)).tolist(),
         }
-        summary["seeds"].append(rec)
-        print(json.dumps(rec))
-
-    (RESULTS / "part5_summary.json").write_text(json.dumps(summary, indent=2))
+        print(f"\nSeed {seed}")
+        for key, value in rec.items():
+            if key != "seed":
+                print(f"  {key} = {round(value, 4) if isinstance(value, float) else value}")
 
     episodes = np.arange(1, CONFIG["episodes"] + 1)
     colors = {0: "tab:blue", 1: "tab:orange", 2: "tab:green"}
@@ -207,4 +212,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    with io.StringIO() as buffer:
+        with contextlib.redirect_stdout(buffer):
+            main()
+        report = buffer.getvalue()
+    print(report, end="")
+    RESULTS.mkdir(exist_ok=True)
+    (RESULTS / "part5_summary.txt").write_text(report, encoding="utf-8")

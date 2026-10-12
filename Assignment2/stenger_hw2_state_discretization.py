@@ -1,4 +1,5 @@
-import json
+import contextlib
+import io
 import sys
 from pathlib import Path
 
@@ -56,18 +57,17 @@ def main():
     print("Bins per variable [phi, phi_dot, theta, theta_dot]:", SHAPE)
     print("Discrete states |S| =", N_STATES)
     print("Q-table entries |Q| = |S| * n_a =", N_STATES * N_ACTIONS)
-    rows = []
     for name, state in TEST_STATES:
         idx = discretize(state)
         flat = state_index(state)
         print(f"{name:34s} state={np.round(state, 4).tolist()} -> bins={idx} flat={flat}")
-        rows.append({"name": name, "state": [float(v) for v in state],
-                     "theta_wrapped": wrap_to_pi(state[2]), "bins": list(idx), "flat": flat})
-    RESULTS.mkdir(exist_ok=True)
-    (RESULTS / "part2_discretization.json").write_text(json.dumps(
-        {"shape": SHAPE, "n_states": N_STATES, "n_q": N_STATES * N_ACTIONS,
-         "edges": [e.tolist() for e in BINS], "tests": rows}, indent=2))
 
 
 if __name__ == "__main__":
-    main()
+    with io.StringIO() as buffer:
+        with contextlib.redirect_stdout(buffer):
+            main()
+        report = buffer.getvalue()
+    print(report, end="")
+    RESULTS.mkdir(exist_ok=True)
+    (RESULTS / "part2_discretization.txt").write_text(report, encoding="utf-8")

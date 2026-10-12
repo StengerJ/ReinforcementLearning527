@@ -16,12 +16,13 @@ python -m pip install -r requirements.txt
 
 | Script | HW part | Output |
 |---|---|---|
-| `python stenger_hw2_test_environment.py` | 1. environment & episode logic | `results/part1_environment.json` |
-| `python stenger_hw2_state_discretization.py` | 2. discretizer + 10 boundary tests | `results/part2_discretization.json` |
-| `python stenger_hw2_epsilon_greedy.py` | 3. ε-greedy frequency test (seed 527) | `results/part3_epsilon_greedy.json` |
-| `python stenger_hw2_audit.py` | 4. SARSA / Q-learning update audit | `results/part4_audit.json` |
-| `python stenger_hw2_experiment.py` | 5. Q-learning, seeds 0,1,2 (a few minutes) | `results/part5_*.npz`, `results/part5_summary.json`, `report/figures/*.png` |
+| `python stenger_hw2_test_environment.py` | 1. environment & episode logic | `results/part1_environment.txt` |
+| `python stenger_hw2_state_discretization.py` | 2. discretizer + 10 boundary tests | `results/part2_discretization.txt` |
+| `python stenger_hw2_epsilon_greedy.py` | 3. ε-greedy frequency test (seed 527) | `results/part3_epsilon_greedy.txt` |
+| `python stenger_hw2_audit.py` | 4. SARSA / Q-learning update audit | `results/part4_audit.txt` |
+| `python stenger_hw2_experiment.py` | 5. Q-learning, seeds 0,1,2 (a few minutes) | `results/part5_*.npz`, `results/part5_summary.txt`, `report/figures/*.png` |
 | `python stenger_hw2_verification.py` | automated assert checks of all components | console PASS/FAIL |
+
 All runs are seeded, so re-running reproduces the reported numbers and figures.
 
 ## Report

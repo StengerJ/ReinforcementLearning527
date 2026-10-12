@@ -1,4 +1,5 @@
-import json
+import contextlib
+import io
 from pathlib import Path
 
 import numpy as np
@@ -33,7 +34,6 @@ def action_probabilities(q_row, epsilon):
 
 
 def main():
-    out = {"seed": SEED, "n": N_SAMPLES, "q": Q_TEST.tolist(), "runs": []}
     for epsilon in (0.20, 0.0):
         rng = np.random.default_rng(SEED)
         q_before = Q_TEST.copy()
@@ -49,12 +49,13 @@ def main():
         print("  empirical   :", np.round(freq, 4).tolist())
         print("  expected    :", np.round(expected, 4).tolist())
         print("  std. error  :", np.round(se, 4).tolist())
-        out["runs"].append({"epsilon": epsilon, "counts": counts.tolist(),
-                            "freq": freq.tolist(), "expected": expected.tolist(),
-                            "se": se.tolist()})
-    RESULTS.mkdir(exist_ok=True)
-    (RESULTS / "part3_epsilon_greedy.json").write_text(json.dumps(out, indent=2))
 
 
 if __name__ == "__main__":
-    main()
+    with io.StringIO() as buffer:
+        with contextlib.redirect_stdout(buffer):
+            main()
+        report = buffer.getvalue()
+    print(report, end="")
+    RESULTS.mkdir(exist_ok=True)
+    (RESULTS / "part3_epsilon_greedy.txt").write_text(report, encoding="utf-8")

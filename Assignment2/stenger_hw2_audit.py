@@ -1,4 +1,5 @@
-import json
+import contextlib
+import io
 import sys
 from pathlib import Path
 
@@ -7,8 +8,6 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "futura_env"))
 from furuta_env import FurutaEnv
-
-from stenger_hw2_epsilon_greedy import epsilon_greedy
 from stenger_hw2_state_discretization import N_ACTIONS, N_STATES, discretize, state_index
 
 RESULTS = HERE / "results"
@@ -86,9 +85,7 @@ def main():
     s2 = state_index(next_state)
     a2 = int(np.argmin(q[s2]))
     assert len(set(q[s2])) > 1, "next-state values must not all be equal"
-    rec1 = audit("nonterminal", q, s, a, r, s2, a2, terminated, state, next_state)
-
-    rec1["A_next_policy_sample"] = epsilon_greedy(q[s2], 0.1, rng)
+    audit("nonterminal", q, s, a, r, s2, a2, terminated, state, next_state)
 
     state = np.array([0.0, 0.0, np.deg2rad(19.9), 2.0])
     env.reset(initial_state=state)
@@ -98,12 +95,14 @@ def main():
     s, s2 = state_index(state), state_index(next_state)
     q[s2] = [100.0, 200.0, 300.0]
     a2 = 2
-    rec2 = audit("terminal", q, s, a, r, s2, a2, terminated, state, next_state)
-
-    RESULTS.mkdir(exist_ok=True)
-    (RESULTS / "part4_audit.json").write_text(json.dumps(
-        {"alpha": ALPHA, "gamma": GAMMA, "seed": SEED, "transitions": [rec1, rec2]}, indent=2))
+    audit("terminal", q, s, a, r, s2, a2, terminated, state, next_state)
 
 
 if __name__ == "__main__":
-    main()
+    with io.StringIO() as buffer:
+        with contextlib.redirect_stdout(buffer):
+            main()
+        report = buffer.getvalue()
+    print(report, end="")
+    RESULTS.mkdir(exist_ok=True)
+    (RESULTS / "part4_audit.txt").write_text(report, encoding="utf-8")
